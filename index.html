@@ -195,6 +195,8 @@
   .dtab th:first-child,.dtab td:first-child{text-align:left;}
   .dtab td{padding:8px 0; border-top:1px solid var(--line); text-align:right; vertical-align:top;}
   .dtab td b{font-weight:700;} .dtab td small{display:block; font-size:10.5px; color:var(--muted);}
+  .dtab .ebtn{border:1px solid var(--line); background:var(--surface); color:var(--brand); border-radius:8px; font:600 11px/1 Inter,system-ui,sans-serif; padding:6px 9px; cursor:pointer; white-space:nowrap;}
+  .dtab .ebtn:active{background:var(--brand-soft);} .dtab td.ec{padding-left:8px; width:1%;}
   .dtab tr.miss td{color:var(--warn);} .dtab tr.off td{color:var(--muted);} .dtab tr.tot td{font-weight:800; border-top:2px solid var(--line);}
   .ocard{display:flex; align-items:center; gap:12px; padding:12px 0; border-top:1px solid var(--line); cursor:pointer;}
   .ocard:first-of-type{border-top:0;}
@@ -681,6 +683,10 @@ const outletByCode2 = code => S.cache[curYM()].outlets.find(o => o.code === code
 /* ----- Bulanan ----- */
 function monthChips() { return `<div class="mchips">${lastMonths().map(m => `<button class="mchip ${m === S.viewMonth ? "on" : ""}" data-m="${m}" type="button">${ymLabel(m)}</button>`).join("")}</div>`; }
 function bindMonthChips(v) { v.querySelectorAll(".mchip").forEach(b => b.onclick = () => { S.viewMonth = b.dataset.m; S.week = 0; render(); }); }
+function minEditDate() {
+  const a = authFor(S.scope); if (S.scope === "*" || a.role === "hq") return "";
+  const [y, m] = curYM().split("-").map(Number), x = new Date(Date.UTC(y, m - 2, 1)); return `${x.getUTCFullYear()}-${pad(x.getUTCMonth() + 1)}-01`;
+}
 function renderMonth(v) {
   const ym = S.viewMonth, thru = thruFor(ym), { c, per, agg } = scopeData(ym, thru, false);
   if (!per.length) { v.innerHTML = monthChips() + '<div class="card"><div class="mload">Tiada outlet.</div></div>'; bindMonthChips(v); return; }
@@ -691,19 +697,26 @@ function renderMonth(v) {
   if (!single) html += `<div class="card"><div class="sgrp">Ikut outlet</div>${per.map(p => `<div class="ocard" style="cursor:default"><div class="n">${esc(p.o.name)}<small>Sasaran ${rm(p.m.month.sales.target)} · hari ${p.m.idxThru}/${p.m.total}</small></div><div class="r"><b>${rm(p.m.month.sales.actual)}</b><span class="pill st-${statusOf(p.m.month.sales)}">${sgn(diffOf(p.m.month.sales), "RM")}</span></div></div>`).join("")}</div>`;
   // jadual harian
   const [y, mo] = ym.split("-").map(Number), n = dim(y, mo), lastD = thru.startsWith(ym) ? Number(thru.slice(8)) : 0, rows = [];
-  const tot = { phone: 0, repair: 0, aksesori: 0, ccti: 0, sales: 0 };
+  const tot = { phone: 0, repair: 0, aksesori: 0, ccti: 0, sales: 0 }, minD = minEditDate();
+  const eb = (date, label) => (!minD || date >= minD) ? `<td class="ec"><button class="ebtn" type="button" data-d="${date}">${label}</button></td>` : "<td class=\"ec\"></td>";
   for (let d = lastD; d >= 1; d--) {
     const date = `${ym}-${pad(d)}`, es = c.entries.filter(e => e.date === date && per.some(p => p.o.code === e.outlet));
     const openN = per.filter(p => p.m.cal.days[d - 1].isOp).length, wd = DOW[dowOf(y, mo, d)];
-    if (!es.length) { rows.push(openN ? `<tr class="miss"><td>${d} ${wd}</td><td colspan="5" style="text-align:right">belum hantar${single ? "" : ` (0/${openN})`}</td></tr>` : `<tr class="off"><td>${d} ${wd}</td><td colspan="5" style="text-align:right">tutup</td></tr>`); continue; }
+    if (!es.length) { rows.push(openN ? `<tr class="miss"><td>${d} ${wd}</td><td colspan="5" style="text-align:right">belum hantar${single ? "" : ` (0/${openN})`}</td>${eb(date, single ? "Isi" : "Buka")}</tr>` : `<tr class="off"><td>${d} ${wd}</td><td colspan="5" style="text-align:right">tutup</td><td class="ec"></td></tr>`); continue; }
     const t = es.reduce((a, e) => { const v2 = valsOf(e); Object.keys(a).forEach(k => a[k] += v2[k]); return a; }, { phone: 0, repair: 0, aksesori: 0, ccti: 0, sales: 0 });
     Object.keys(tot).forEach(k => tot[k] += t[k]);
-    rows.push(`<tr><td>${d} ${wd}${single ? "" : `<small>${es.length}/${openN} outlet</small>`}</td><td>${fmt(t.phone)}</td><td>${fmt(t.repair)}</td><td>${fmt(t.aksesori)}</td><td>${t.ccti}</td><td><b>${fmt(t.sales)}</b></td></tr>`);
+    rows.push(`<tr><td>${d} ${wd}${single ? "" : `<small>${es.length}/${openN} outlet</small>`}</td><td>${fmt(t.phone)}</td><td>${fmt(t.repair)}</td><td>${fmt(t.aksesori)}</td><td>${t.ccti}</td><td><b>${fmt(t.sales)}</b></td>${eb(date, single ? "✎ Edit" : "Buka")}</tr>`);
   }
-  html += `<div class="card"><div class="sgrp">Harian (RM)</div><table class="dtab"><thead><tr><th>Tarikh</th><th>Phone</th><th>Repair</th><th>Akse</th><th>CCTI</th><th>Jumlah</th></tr></thead><tbody>
-    <tr class="tot"><td>Jumlah</td><td>${fmt(tot.phone)}</td><td>${fmt(tot.repair)}</td><td>${fmt(tot.aksesori)}</td><td>${tot.ccti}</td><td>${fmt(tot.sales)}</td></tr>${rows.join("")}</tbody></table>
+  html += `<div class="card"><div class="sgrp">Harian (RM)</div><table class="dtab"><thead><tr><th>Tarikh</th><th>Phone</th><th>Repair</th><th>Akse</th><th>CCTI</th><th>Jumlah</th><th></th></tr></thead><tbody>
+    <tr class="tot"><td>Jumlah</td><td>${fmt(tot.phone)}</td><td>${fmt(tot.repair)}</td><td>${fmt(tot.aksesori)}</td><td>${tot.ccti}</td><td>${fmt(tot.sales)}</td><td class="ec"></td></tr>${rows.join("")}</tbody></table>
     <div class="mnote">Hari operasi ditolak Rabu${per.some(p => p.o.opensWed) ? " (Kelang Lama buka setiap hari)" : ""} dan hari cuti. Baris kuning = hari buka yang belum ada laporan.</div></div>`;
   v.innerHTML = html; bindMonthChips(v);
+  v.querySelectorAll(".ebtn").forEach(b => b.onclick = async () => {
+    const date = b.dataset.d;
+    try { await loadMonth(date.slice(0, 7)); } catch (er) { toast(er.message); return; }
+    if (S.scope === "*") S.hqDate = date; else { S.draft = { outlet: S.scope, date }; loadDraft(outletByCode2(S.scope)); }
+    setTab("today"); window.scrollTo(0, 0);
+  });
 }
 
 /* ----- Skor ----- */
