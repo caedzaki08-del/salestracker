@@ -369,17 +369,22 @@ const sgn = (v, unit) => (v < 0 ? "−" : "+") + fv(Math.abs(v), unit);
 function buildReport(o, ym, date, entries, cuti, today) {
   const m = outletMetrics(o, ym, date, entries, cuti), s = m.month.sales;
   const e = entries.find(x => x.outlet === o.code && x.date === date) || {}, dv = valsOf(e);
-  const d = diffOf(s), st = (d < 0 ? "-RM " : "+RM ") + fmt(Math.abs(d));
+  const tag = x => (x < 0 ? "DEFICIT -RM " : "SURPLUS +RM ") + fmt(Math.abs(x));
+  const d = diffOf(s), st = tag(d);
+  const wk = weekOf(Number(date.slice(8, 10))), W = m.weeks[wk];
   const L = ["*TRACKING SALE PERFORMANCE*"];
   if (date !== today) L.push("Tarikh : " + prettyDate(date));
   L.push("", `*${o.code.toUpperCase()} ${Math.round(s.target / 1000)}k*`,
     `Daily Target ${m.total} Days ${rm(m.daily.sales)} (${m.idxThru} Day)`, "",
-    `TS Supposed : ${rm(s.supposed)}`, `TS Today : ${rm(s.actual)}`, ` Status :  ${st}`, "", "*DAILY REPORT*");
+    `TS Supposed : ${rm(s.supposed)}`, `TS Today : ${rm(s.actual)}`, `Status : ${st}`, "", "*DAILY REPORT*");
   if (o.hasRepair) L.push(`Repair : ${rm(dv.repair)}`);
-  L.push(`Phone : ${rm(dv.phone)}`, `Aksesori : ${rm(dv.aksesori)}`, `CCTI Received : ${fmt(dv.ccti)} unit`, "", "*MONTHLY REPORT*");
+  L.push(`Phone : ${rm(dv.phone)}`, `Aksesori : ${rm(dv.aksesori)}`, `CCTI Received : ${fmt(dv.ccti)} unit`, "",
+    `*WEEKLY REPORT (W${wk} · ${W.range[0]}-${W.range[1]} ${MS[Number(ym.slice(5)) - 1]})*`,
+    `Target Minggu : ${rm(W.sales.target)}`, `Actual : ${rm(W.sales.actual)}`, `Status : ${tag(W.sales.actual - W.sales.target)}`, "", "*MONTHLY REPORT*");
   if (o.hasRepair) L.push(`Repair : ${rm(m.month.repair.actual)}`);
   L.push(`Phone : ${rm(m.month.phone.actual)}`, `Aksesori : ${rm(m.month.aksesori.actual)}`,
-    `CCTI Received : ${fmt(m.month.ccti.actual)} / ${fmt(m.month.ccti.target)} unit`);
+    `CCTI Received : ${fmt(m.month.ccti.actual)} / ${fmt(m.month.ccti.target)} unit`,
+    `Target Bulan : ${rm(s.target)}`, `Status Target Bulan : ${tag(s.actual - s.target)}`);
   return L.join("\n");
 }
 
@@ -467,16 +472,20 @@ async function loadMonth(ym, force) {
   const a = authFor(S.scope); if (!a) throw Object.assign(new Error("Perlu PIN"), { server: true });
   try {
     const j = await api("state", { outlet: a.role === "hq" ? "*" : S.scope, pin: a.pin, month: ym });
-    S.cache[ym] = j; return j;
+    S.cache[ym] = j; saveCache(ym); return j;
   } catch (e) {
+    if (isNetErr(e)) { const c = store.get(cacheKey(ym), null); if (c) { S.cache[ym] = c; toast("Tiada talian. Papar data yang tersimpan dalam phone.", 3500); return c; } }
     if (e.server && /PIN/i.test(e.message)) { delete S.auth[a.role === "hq" ? "*" : S.scope]; store.set("ksales_auth", S.auth); updateAuthBtn(); }
     throw e;
   }
 }
+const cacheKey = ym => "ksales_c_" + (S.scope === "*" ? "*" : S.scope) + "_" + ym;
+function saveCache(ym) { if (S.cache[ym] && S.scope) store.set(cacheKey(ym), S.cache[ym]); }
 function applyEntry(ent) {
   const c = S.cache[ent.date.slice(0, 7)]; if (!c) return;
   const i = c.entries.findIndex(e => e.date === ent.date && e.outlet === ent.outlet);
   i >= 0 ? c.entries[i] = ent : c.entries.push(ent);
+  saveCache(ent.date.slice(0, 7));
 }
 /** Entri + draf (supaya hero kemas kini masa menaip). */
 function entriesWithDraft(ym, o) {
@@ -570,15 +579,28 @@ function heroHTML(eyebrow, c, extra) {
 }
 
 /* ----- Hari Ini (outlet) ----- */
+const DRAFT_F = ["phone", "repair", "aksesori", "cc", "ti"], draftKey = (o, d) => o + "|" + d;
+function persistDraft() {
+  const d = S.draft; if (!d) return;
+  const all = store.get("ksales_drafts", {}), k = draftKey(d.outlet, d.date);
+  if (DRAFT_F.some(f => String(d[f] ?? "").trim() !== "")) { all[k] = Object.fromEntries(DRAFT_F.map(f => [f, d[f] ?? ""])); store.set("ksales_lastdraft", { outlet: d.outlet, date: d.date }); }
+  else delete all[k];
+  store.set("ksales_drafts", all);
+}
+function dropDraft(outlet, date) { const all = store.get("ksales_drafts", {}); delete all[draftKey(outlet, date)]; store.set("ksales_drafts", all); }
 function ensureDraft(o) {
   if (S.draft && S.draft.outlet === o.code) return;
-  S.draft = { outlet: o.code, date: S.today };
+  const ld = store.get("ksales_lastdraft", null), all = store.get("ksales_drafts", {});
+  const date = ld && ld.outlet === o.code && ld.date <= S.today && ld.date.slice(0, 7) === curYM() && all[draftKey(o.code, ld.date)] ? ld.date : S.today;
+  S.draft = { outlet: o.code, date };
   loadDraft(o);
 }
 function loadDraft(o) {
   const c = S.cache[S.draft.date.slice(0, 7)], e = c && c.entries.find(x => x.date === S.draft.date && x.outlet === o.code);
   Object.assign(S.draft, e ? { phone: e.phone, repair: e.repair, aksesori: e.aksesori, cc: e.cc, ti: e.ti, saved: e }
                            : { phone: "", repair: "", aksesori: "", cc: "", ti: "", saved: null });
+  const sv = store.get("ksales_drafts", {})[draftKey(S.draft.outlet, S.draft.date)];
+  if (sv) Object.assign(S.draft, sv);   // draf belum dihantar dalam phone, lebih baru daripada sheet
 }
 function renderToday(v) {
   const o = S.cache[curYM()].outlets.find(x => x.code === S.scope); if (!o) { v.innerHTML = ""; return; }
@@ -602,7 +624,7 @@ function renderToday(v) {
      <button class="btn primary big" id="btnSend" type="button">${ICON.send}Simpan &amp; Hantar Laporan</button>
      <div class="row2"><button class="btn ghost" id="btnView" type="button">${ICON.eye}Lihat laporan</button><button class="btn ghost" id="btnClear" type="button">Kosongkan borang</button></div>
    </div>`;
-  const bind = (id, key) => $(id) && $(id).addEventListener("input", e => { S.draft[key] = e.target.value; updateLive(o); });
+  const bind = (id, key) => $(id) && $(id).addEventListener("input", e => { S.draft[key] = e.target.value; persistDraft(); updateLive(o); });
   bind("inpPhone", "phone"); bind("inpRepair", "repair"); bind("inpAkse", "aksesori"); bind("inpCC", "cc"); bind("inpTI", "ti");
   $("inpDate").addEventListener("change", async e => {
     if (!e.target.value) return; S.draft.date = e.target.value;
@@ -610,7 +632,7 @@ function renderToday(v) {
     loadDraft(o); renderToday(v);
   });
   $("btnSend").onclick = () => sendReport(o); $("btnView").onclick = () => showReport(o, false);
-  $("btnClear").onclick = () => { Object.assign(S.draft, { phone: "", repair: "", aksesori: "", cc: "", ti: "" }); renderToday(v); };
+  $("btnClear").onclick = () => { Object.assign(S.draft, { phone: "", repair: "", aksesori: "", cc: "", ti: "" }); dropDraft(S.draft.outlet, S.draft.date); renderToday(v); };
   updateLive(o);
 }
 function updateLive(o) {
@@ -643,7 +665,7 @@ async function sendReport(o) {
       toast("Tiada talian. Disimpan dalam phone, akan dihantar bila online.", 4000);
     } else { toast(e.message, 4000); btn.disabled = false; return; }
   }
-  btn.disabled = false; updateLive(o); showReport(o, true);
+  dropDraft(p.outlet, p.date); btn.disabled = false; updateLive(o); showReport(o, true);
 }
 async function flushQueue() {
   if (!S.queue.length || !navigator.onLine) return;
