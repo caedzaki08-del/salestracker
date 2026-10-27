@@ -127,7 +127,9 @@
   .c-cc .ic{background:var(--c-cc-bg); color:var(--c-cc);}
   .dline{display:flex; gap:10px; align-items:center; margin-top:12px; padding:10px 12px; border-radius:12px; background:var(--brand-soft); color:var(--text-2); font-size:13px; flex-wrap:wrap; justify-content:space-between;}
   .dline b{color:var(--text); font-weight:800;}
-  .datef{width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--line); background:var(--surface-2); color:var(--text); font:600 16px Inter,system-ui,sans-serif;}
+  .datef{display:block; box-sizing:border-box; width:100%; max-width:100%; min-width:0; min-height:48px; padding:12px 14px; border-radius:12px; border:1px solid var(--line); background:var(--surface-2); color:var(--text); font:600 16px Inter,system-ui,sans-serif; -webkit-appearance:none; appearance:none; text-align:left;}
+  .datef::-webkit-date-and-time-value{text-align:left; min-height:1.2em;}
+  .datef::-webkit-datetime-edit{padding:0;}
   .lbl{display:block; font-size:11.5px; font-weight:600; color:var(--muted); margin:0 0 6px; letter-spacing:.06em; text-transform:uppercase;}
   .editbar{margin-top:10px; padding:10px 12px; border-radius:12px; background:var(--warn-bg); color:var(--warn); font-size:12.5px; line-height:1.45;}
   .chip{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:700;}
