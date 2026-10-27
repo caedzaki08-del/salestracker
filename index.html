@@ -1,0 +1,768 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0A2E8A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="KLIKI Sales">
+<title>KLIKI Sales Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: light;
+    --brand:#1565FF; --brand-deep:#0A2E8A; --brand-soft:#E8F0FF;
+    --navy:#0A1A47; --navy-2:#0A2E8A;
+    --bg:#F4F6FB; --surface:#fff; --surface-2:#F1F4F9; --line:#E5E9F1;
+    --text:#0B1530; --text-2:#475268; --muted:#8892A6;
+    --good:#0E9F57; --good-bg:#E6F6EE; --warn:#B26A00; --warn-bg:#FFF3DD; --bad:#E0393E; --bad-bg:#FDECEC;
+    --c-phone:#1565FF; --c-phone-bg:#E8F0FF; --c-repair:#C77700; --c-repair-bg:#FFF3DD;
+    --c-cc:#0E9F57; --c-cc-bg:#E6F6EE; --c-others:#7C4DDB; --c-others-bg:#F1EAFD;
+    --shadow:0 1px 2px rgba(11,21,48,.04),0 6px 20px -8px rgba(11,21,48,.10);
+    --shadow-lg:0 2px 4px rgba(11,21,48,.04),0 18px 40px -16px rgba(11,21,48,.22);
+    --radius:16px; --safe-t:env(safe-area-inset-top,0px); --safe-b:env(safe-area-inset-bottom,0px);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      color-scheme: dark;
+      --bg:#0A0F1C; --surface:#121A2B; --surface-2:#1A2336; --line:#243049;
+      --text:#EEF2FA; --text-2:#B6C0D4; --muted:#7F8BA3; --brand-soft:#16264A;
+      --good:#45C987; --good-bg:#11301F; --warn:#F2B14C; --warn-bg:#352710; --bad:#F2696D; --bad-bg:#3A1A1C;
+      --c-phone:#6EA0FF; --c-phone-bg:#16264A; --c-repair:#F2B14C; --c-repair-bg:#352710;
+      --c-cc:#45C987; --c-cc-bg:#11301F; --c-others:#B39AF5; --c-others-bg:#251D42;
+      --shadow:0 1px 2px rgba(0,0,0,.3); --shadow-lg:0 10px 30px rgba(0,0,0,.4);
+      --navy:#070F26; --navy-2:#0B1F5C;
+    }
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0;}
+  body{background:var(--bg); color:var(--text); font:14.5px/1.5 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+    font-feature-settings:"tnum" 1,"cv11" 1,"ss01" 1; -webkit-font-smoothing:antialiased; min-height:100vh; padding-bottom:calc(32px + var(--safe-b));}
+  svg.i{width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; flex:none;}
+  .wrap{max-width:520px; margin:0 auto;}
+
+  /* header */
+  header{position:relative; z-index:5; color:#fff; padding:calc(14px + var(--safe-t)) 16px 40px; border-radius:0 0 24px 24px;
+    background:linear-gradient(135deg,var(--navy-2) 0%,var(--brand) 140%); box-shadow:0 12px 30px -18px rgba(10,46,138,.6);}
+  header .row{display:flex; align-items:center; justify-content:space-between; gap:12px;}
+  header .logo{height:22px; width:auto; display:block;}
+  header .logo-txt{font-weight:800; font-size:20px; letter-spacing:-.02em;}
+  header .sub{font-size:11.5px; color:rgba(255,255,255,.82); margin-top:4px; letter-spacing:.01em;}
+  .icon-btn{display:inline-flex; align-items:center; justify-content:center; gap:6px; height:38px; min-width:38px; padding:0 12px; border-radius:12px;
+    border:0; background:rgba(255,255,255,.16); color:#fff; font:600 12.5px Inter,system-ui,sans-serif; cursor:pointer; max-width:150px;}
+  .icon-btn span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .icon-btn svg.i{width:17px; height:17px;}
+  .icon-btn:active{background:rgba(255,255,255,.26);}
+  .sel-wrap{position:relative; margin-top:14px;}
+  #outletSelect{width:100%; appearance:none; -webkit-appearance:none; border:0; border-radius:14px; color:#fff;
+    background:rgba(255,255,255,.16) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='white' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 16px center;
+    font:700 16px Inter,system-ui,sans-serif; padding:14px 40px 14px 16px; cursor:pointer;}
+  #outletSelect option{color:#0B1530; background:#fff;}
+  #outletSelect:focus{outline:2px solid rgba(255,255,255,.5); outline-offset:1px;}
+
+  main.wrap{position:relative; z-index:6; margin:-24px auto 0; padding:0 14px;}
+  #emptyState{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:36px 20px; text-align:center; color:var(--muted); font-size:14px; line-height:1.55;}
+  #emptyState .big{display:grid; place-items:center; width:52px; height:52px; margin:0 auto 12px; border-radius:16px; background:var(--brand-soft); color:var(--brand);}
+  #emptyState .big svg.i{width:26px; height:26px;}
+  #emptyState b{display:block; color:var(--text); font-size:15px; margin-bottom:2px;}
+  #trackerArea{display:none;}
+  #demoBar{margin:0 0 10px; padding:9px 12px; border-radius:12px; background:var(--warn-bg); color:var(--warn); font-size:12.5px; line-height:1.4; display:none;}
+
+  /* tabs */
+  #kindToggle{display:grid; grid-template-columns:repeat(3,1fr); gap:4px; padding:4px; border-radius:14px;
+    background:var(--surface); border:1px solid var(--line); box-shadow:var(--shadow);}
+  #kindToggle button{display:flex; align-items:center; justify-content:center; gap:8px; border:0; background:transparent; color:var(--muted);
+    font:600 13px Inter,system-ui,sans-serif; padding:11px 4px; border-radius:10px; cursor:pointer; transition:background .15s,color .15s; min-width:0;}
+  @media (max-width:380px){ #kindToggle button{flex-direction:column; gap:3px; font-size:11.5px; padding:8px 2px;} }
+  #kindToggle button svg.i{width:18px; height:18px;}
+  #kindToggle button.on{background:var(--brand); color:#fff; box-shadow:0 6px 16px -8px rgba(21,101,255,.7);}
+
+  /* hero */
+  .hero{position:relative; overflow:hidden; margin-top:12px; border-radius:var(--radius); color:#fff; padding:18px 18px 16px;
+    background:linear-gradient(145deg,var(--navy-2) 0%,var(--brand) 120%); box-shadow:var(--shadow-lg);}
+  .hero::after{content:""; position:absolute; right:-60px; top:-70px; width:200px; height:200px; border-radius:50%;
+    background:radial-gradient(circle,rgba(255,255,255,.16),rgba(255,255,255,0) 70%); pointer-events:none;}
+  .hero .eyebrow{font-size:11.5px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:rgba(255,255,255,.78);}
+  .hero .big{font-size:40px; font-weight:800; letter-spacing:-.03em; line-height:1.05; margin-top:4px;}
+  .hero .sub2{font-size:12.5px; color:rgba(255,255,255,.85); margin-top:4px;}
+  .hero .hbar{position:relative; height:8px; border-radius:99px; background:rgba(255,255,255,.2); margin-top:14px;}
+  .hero .hbar>i{display:block; height:100%; border-radius:99px; background:#fff; max-width:100%;}
+  .hero .hbar .pace{position:absolute; top:-4px; bottom:-4px; width:2px; margin-left:-1px; background:#FBBF24; border-radius:2px;}
+  .hero .legend{display:flex; justify-content:space-between; font-size:11px; color:rgba(255,255,255,.75); margin-top:6px;}
+  .statusCard{display:flex; align-items:center; gap:8px; margin-top:12px; padding:8px 12px; border-radius:999px; width:fit-content; max-width:100%;
+    background:rgba(255,255,255,.14); font-size:12.5px; line-height:1.35;}
+  .statusCard .dot{width:8px; height:8px; border-radius:50%; flex:none; background:rgba(255,255,255,.6);}
+  .statusCard.s-ok .dot{background:#34D399; box-shadow:0 0 0 3px rgba(52,211,153,.25);}
+  .statusCard.s-warn .dot{background:#FBBF24; box-shadow:0 0 0 3px rgba(251,191,36,.25);}
+  .statusCard.s-bad .dot{background:#F87171; box-shadow:0 0 0 3px rgba(248,113,113,.25);}
+  .statusCard b{font-weight:700;}
+
+  h2{font-size:13px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin:20px 4px 10px;}
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px; margin-top:12px;}
+  .card .hd{display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:4px;}
+  .card .ttl{font-size:13px; font-weight:700; color:var(--brand); display:flex; align-items:center; gap:6px;}
+  .card .ttl svg.i{width:16px; height:16px;}
+
+  /* form */
+  .fgrid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;}
+  .fld{background:var(--surface-2); border:1px solid var(--line); border-radius:14px; padding:10px 12px;}
+  .fld:focus-within{outline:2px solid var(--brand); outline-offset:-1px; background:var(--surface);}
+  .fld label{display:flex; align-items:center; gap:8px; font-size:12px; font-weight:600; color:var(--text-2);}
+  .fld .ic{width:24px; height:24px; border-radius:8px; display:grid; place-items:center; flex:none;}
+  .fld .ic svg.i{width:14px; height:14px;}
+  .fld .inp{display:flex; align-items:baseline; gap:6px; margin-top:6px;}
+  .fld .inp small{font-size:12px; font-weight:700; color:var(--muted);}
+  .fld input{width:100%; min-width:0; border:0; background:transparent; color:var(--text); font:800 24px Inter,system-ui,sans-serif; letter-spacing:-.02em; padding:0; outline:none;}
+  .c-phone .ic{background:var(--c-phone-bg); color:var(--c-phone);}
+  .c-repair .ic{background:var(--c-repair-bg); color:var(--c-repair);}
+  .c-akse .ic{background:var(--c-others-bg); color:var(--c-others);}
+  .c-cc .ic{background:var(--c-cc-bg); color:var(--c-cc);}
+  .dline{display:flex; gap:10px; align-items:center; margin-top:12px; padding:10px 12px; border-radius:12px; background:var(--brand-soft); color:var(--text-2); font-size:13px; flex-wrap:wrap; justify-content:space-between;}
+  .dline b{color:var(--text); font-weight:800;}
+  .datef{width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--line); background:var(--surface-2); color:var(--text); font:600 16px Inter,system-ui,sans-serif;}
+  .lbl{display:block; font-size:11.5px; font-weight:600; color:var(--muted); margin:0 0 6px; letter-spacing:.06em; text-transform:uppercase;}
+  .editbar{margin-top:10px; padding:10px 12px; border-radius:12px; background:var(--warn-bg); color:var(--warn); font-size:12.5px; line-height:1.45;}
+  .chip{display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:700;}
+  .chip.ok{background:var(--good-bg); color:var(--good);} .chip.no{background:var(--warn-bg); color:var(--warn);}
+
+  /* buttons */
+  .btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; border:1px solid var(--line); background:var(--surface); color:var(--text);
+    border-radius:14px; padding:13px 12px; font:600 13.5px Inter,system-ui,sans-serif; cursor:pointer; box-shadow:var(--shadow); transition:transform .1s;}
+  .btn:active{transform:scale(.98);}
+  .btn svg.i{width:18px; height:18px;}
+  .btn.primary{background:var(--brand); border-color:var(--brand); color:#fff; box-shadow:0 10px 24px -12px rgba(21,101,255,.8);}
+  .btn.big{width:100%; font-size:15px; padding:16px; margin-top:16px; border-radius:16px;}
+  .btn.ghost{color:var(--text-2);}
+  .btn.danger{background:var(--bad); border-color:var(--bad); color:#fff; box-shadow:none;}
+  .btn[disabled]{opacity:.45; pointer-events:none;}
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;}
+  .foot{text-align:center; font-size:11.5px; color:var(--muted); margin-top:20px; line-height:1.5;}
+
+  /* toast & modal */
+  #toast{position:fixed; left:50%; bottom:calc(24px + var(--safe-b)); transform:translateX(-50%) translateY(20px); background:#0B1530; color:#fff;
+    padding:12px 18px; border-radius:12px; font-size:13.5px; font-weight:500; opacity:0; pointer-events:none; transition:all .25s ease; z-index:100;
+    max-width:90vw; text-align:center; box-shadow:var(--shadow-lg);}
+  #toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  .modal-overlay{position:fixed; inset:0; background:rgba(7,15,38,.55); backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px);
+    display:none; align-items:flex-end; justify-content:center; z-index:50;}
+  .modal-overlay.show{display:flex;}
+  .modal{background:var(--surface); width:100%; max-width:520px; max-height:92vh; overflow:auto; border-radius:22px 22px 0 0;
+    padding:10px 20px calc(24px + var(--safe-b)); animation:up .22s ease; box-shadow:var(--shadow-lg);}
+  .modal::before{content:""; display:block; width:40px; height:4px; border-radius:4px; background:var(--line); margin:0 auto 14px;}
+  @keyframes up{from{transform:translateY(30px); opacity:0} to{transform:none; opacity:1}}
+  .modal h3{margin:0 0 4px; font-size:18px; font-weight:700; letter-spacing:-.01em;}
+  .modal .hint{color:var(--muted); font-size:13px; line-height:1.5;}
+  .modal label{display:block; font-size:11.5px; font-weight:600; color:var(--muted); margin:16px 0 6px; letter-spacing:.06em; text-transform:uppercase;}
+  .modal input{width:100%; padding:13px 14px; border-radius:12px; border:1px solid var(--line); background:var(--surface-2); color:var(--text); font:500 16px Inter,system-ui,sans-serif;}
+  .modal input:focus{outline:2px solid var(--brand); outline-offset:-1px; background:var(--surface);}
+  .modal-actions{display:flex; gap:10px; margin-top:20px;} .modal-actions .btn{flex:1;}
+  .err{color:var(--bad); font-size:13px; font-weight:500; margin-top:10px; min-height:1em;}
+  .rtxt{white-space:pre-wrap; word-break:break-word; font:500 13.5px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace; background:var(--surface-2); border:1px solid var(--line); border-radius:14px; padding:14px; margin-top:12px; color:var(--text);}
+  .hidden{display:none !important;}
+
+  /* month / score */
+  .mchips{display:flex; gap:6px; overflow-x:auto; margin-top:12px; padding-bottom:2px; scrollbar-width:none;}
+  .mchips::-webkit-scrollbar{display:none;}
+  .mchip{flex:none; border:1px solid var(--line); background:var(--surface); color:var(--text-2); font:600 13px Inter,system-ui,sans-serif; padding:8px 14px; border-radius:999px; cursor:pointer;}
+  .mchip.on{background:var(--brand); border-color:var(--brand); color:#fff;}
+  .mnote{font-size:12px; color:var(--muted); line-height:1.5; margin-top:10px;}
+  .pill{display:inline-flex; align-items:center; padding:3px 9px; border-radius:999px; font-size:11.5px; font-weight:700; white-space:nowrap;}
+  .st-good{background:var(--good-bg); color:var(--good);} .st-warn{background:var(--warn-bg); color:var(--warn);} .st-bad{background:var(--bad-bg); color:var(--bad);} .st-na{background:var(--surface-2); color:var(--muted);}
+  .bar{position:relative; height:10px; border-radius:99px; background:var(--surface-2); margin-top:10px;}
+  .bar>i{display:block; height:100%; border-radius:99px; background:var(--brand); max-width:100%;}
+  .bar .pace{position:absolute; top:-4px; bottom:-4px; width:2px; margin-left:-1px; background:var(--text); opacity:.55; border-radius:2px;}
+  .bar>i.good{background:var(--good);} .bar>i.warn{background:var(--warn);} .bar>i.bad{background:var(--bad);}
+  .sgrp{font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--brand); margin:0 0 4px;}
+  .srow{padding:12px 0; border-top:1px solid var(--line);}
+  .srow:first-of-type{border-top:0;}
+  .srow .t{display:flex; align-items:center; gap:10px;}
+  .srow .ic{width:22px; height:22px; border-radius:50%; display:grid; place-items:center; flex:none; font-size:12px; font-weight:800;}
+  .srow .ic.good{background:var(--good-bg); color:var(--good);} .srow .ic.warn{background:var(--warn-bg); color:var(--warn);}
+  .srow .ic.bad{background:var(--bad-bg); color:var(--bad);} .srow .ic.na{background:var(--surface-2); color:var(--muted);}
+  .srow .n{flex:1; min-width:0; font-size:14px; font-weight:600;}
+  .srow .n small{display:block; font-size:11.5px; font-weight:500; color:var(--muted);}
+  .srow .a{text-align:right; font-size:13px; color:var(--muted); white-space:nowrap;}
+  .srow .a b{font-size:17px; color:var(--text); font-weight:800; display:block;}
+  .srow .bar{margin-left:32px; height:7px; margin-top:8px;} .srow .bar .pace{top:-3px; bottom:-3px;}
+  .srow .why{margin:6px 0 0 32px; font-size:12px; color:var(--text-2);}
+  .dtab{width:100%; border-collapse:collapse; font-size:13px;}
+  .dtab th{font-size:10.5px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; text-align:right; padding:0 0 8px;}
+  .dtab th:first-child,.dtab td:first-child{text-align:left;}
+  .dtab td{padding:8px 0; border-top:1px solid var(--line); text-align:right; vertical-align:top;}
+  .dtab td b{font-weight:700;} .dtab td small{display:block; font-size:10.5px; color:var(--muted);}
+  .dtab tr.miss td{color:var(--warn);} .dtab tr.off td{color:var(--muted);} .dtab tr.tot td{font-weight:800; border-top:2px solid var(--line);}
+  .ocard{display:flex; align-items:center; gap:12px; padding:12px 0; border-top:1px solid var(--line); cursor:pointer;}
+  .ocard:first-of-type{border-top:0;}
+  .ocard .n{flex:1; min-width:0; font-weight:700; font-size:14.5px;}
+  .ocard .n small{display:block; font-weight:500; font-size:12px; color:var(--muted);}
+  .ocard .r{text-align:right;} .ocard .r b{display:block; font-size:16px; font-weight:800;}
+  .mload{padding:28px 0; text-align:center; color:var(--muted); font-size:13.5px;}
+</style>
+</head>
+<body>
+<header>
+  <div class="row">
+    <div>
+      <img class="logo" id="logoImg" alt="KLIKI" src="https://klikidotmy.github.io/kliki-marketing-dashboard/icons/logo-white.png">
+      <div class="sub">Sales Tracker · <span id="dateTag"></span></div>
+    </div>
+    <button class="icon-btn" id="authBtn" type="button"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span id="authLbl">PIN</span></button>
+  </div>
+  <div class="sel-wrap"><select id="outletSelect"><option value="">Pilih outlet</option></select></div>
+</header>
+
+<main class="wrap">
+  <div id="demoBar"></div>
+  <div id="emptyState">
+    <div class="big"><svg class="i" viewBox="0 0 24 24"><path d="M3 10l1.5-5h15L21 10M4 10h16v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="M9 20v-5h6v5"/></svg></div>
+    <b>Pilih outlet untuk mula</b>
+    Isi jualan harian di sini. Anda boleh tengok kedudukan vs sasaran dan hantar laporan ke WhatsApp.
+  </div>
+  <div id="trackerArea">
+    <div id="kindToggle">
+      <button type="button" data-tab="today" class="on"><svg class="i" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg><span id="tabTodayLbl">Hari Ini</span></button>
+      <button type="button" data-tab="month"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Bulanan</button>
+      <button type="button" data-tab="score"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>Skor</button>
+    </div>
+    <div id="view"></div>
+  </div>
+  <div class="foot" id="foot"></div>
+</main>
+
+<div class="modal-overlay" id="pinModal"><div class="modal">
+  <h3 id="pinTitle">Masuk PIN</h3>
+  <div class="hint" id="pinHint">PIN diberi oleh HQ. Sekali sahaja untuk phone ini.</div>
+  <label for="pinPic">Nama PIC</label><input id="pinPic" type="text" autocomplete="off" maxlength="40" placeholder="Cth: Aiman">
+  <label for="pinVal">PIN</label><input id="pinVal" type="password" inputmode="numeric" autocomplete="off" maxlength="12">
+  <div class="err" id="pinErr"></div>
+  <div class="modal-actions"><button class="btn ghost" id="pinCancel" type="button">Batal</button><button class="btn primary" id="pinOk" type="button">Sahkan</button></div>
+  <div class="modal-actions hidden" id="pinOutRow"><button class="btn ghost" id="pinLogout" type="button">Log keluar phone ini</button></div>
+</div></div>
+
+<div class="modal-overlay" id="repModal"><div class="modal">
+  <h3 id="repTitle">Hantar laporan</h3>
+  <div class="hint">Tekan butang bawah untuk copy laporan dan buka WhatsApp, kemudian pilih group dan hantar.</div>
+  <div class="rtxt" id="repTxt"></div>
+  <div class="modal-actions"><button class="btn ghost" id="repClose" type="button">Tutup</button><button class="btn" id="repCopy" type="button">Copy</button></div>
+  <div class="modal-actions"><button class="btn primary" id="repWa" type="button"><svg class="i" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-4-7.5L21 3l-1.5 4A9 9 0 0 1 21 12z"/></svg>Copy &amp; buka WhatsApp</button></div>
+</div></div>
+<div id="toast"></div>
+
+<script>
+/* =================================================================
+   KONFIGURASI
+   SCRIPT_URL = URL Web App Apps Script (Deploy > Web app).
+   Kosong = mod DEMO (data contoh dalam memori, PIN outlet 1234, HQ 9999).
+   ================================================================= */
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz3fIDY3SgFngmx3r7YsyxgbmWoX2CpX_yhtBUKoufsgOIoO_9HIxQVom9Krs9mzrNZAg/exec";
+const DEMO = !SCRIPT_URL;
+const TZ = "Asia/Kuala_Lumpur";
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const pad = n => String(n).padStart(2, "0");
+const MONTHS = ["Januari","Februari","Mac","April","Mei","Jun","Julai","Ogos","September","Oktober","November","Disember"];
+const MS = ["Jan","Feb","Mac","Apr","Mei","Jun","Jul","Ogo","Sep","Okt","Nov","Dis"];
+const DOW = ["Ahd","Isn","Sel","Rab","Kha","Jum","Sab"];
+const fmt = n => Math.round(n).toLocaleString("en-US");
+const rm = n => "RM " + fmt(n);
+const dim = (y, m) => new Date(Date.UTC(y, m, 0)).getUTCDate();
+const dowOf = (y, m, d) => new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+const weekOf = d => d <= 7 ? 1 : d <= 14 ? 2 : d <= 21 ? 3 : 4;
+const prettyDate = s => { const [y, m, d] = s.split("-").map(Number); return `${DOW[dowOf(y, m, d)]}, ${d} ${MS[m - 1]} ${y}`; };
+const shortDate = s => { const [y, m, d] = s.split("-").map(Number); return `${d} ${MS[m - 1]}`; };
+const num = v => Math.max(0, parseFloat(String(v ?? "").replace(/,/g, "")) || 0);
+const localToday = () => new Date().toLocaleDateString("en-CA", { timeZone: TZ });
+const store = { get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+                set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
+
+const ICON = {
+  phone: '<svg class="i" viewBox="0 0 24 24"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>',
+  repair:'<svg class="i" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0 5 5L21 12.6 12.6 21 3 11.4 11.4 3z" transform="scale(.86) translate(2 2)"/></svg>',
+  akse:  '<svg class="i" viewBox="0 0 24 24"><path d="M6 8h12l-1 12H7zM9 8a3 3 0 0 1 6 0"/></svg>',
+  cc:    '<svg class="i" viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4zM3 12l9 4 9-4M3 17l9 4 9-4"/></svg>',
+  send:  '<svg class="i" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></svg>',
+  eye:   '<svg class="i" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+};
+
+/* =================================================================
+   KIRAAN (satu tempat sahaja: hari operasi, sasaran, minggu, surplus/deficit)
+   ================================================================= */
+/** Kalendar bulan untuk satu outlet: tolak Rabu (kecuali opensWed) dan hari cuti. */
+function calendar(ym, o, cuti) {
+  const [y, m] = ym.split("-").map(Number), n = dim(y, m), days = []; let idx = 0;
+  for (let d = 1; d <= n; d++) {
+    const date = `${ym}-${pad(d)}`, wd = dowOf(y, m, d);
+    const cut = (cuti || []).some(c => c.date === date && (c.outlet === "*" || c.outlet === o.code));
+    const isOp = !(wd === 3 && !o.opensWed) && !cut;
+    if (isOp) idx++;
+    days.push({ d, date, wd, isOp, idx, cut });
+  }
+  return { days, total: idx, n };
+}
+const CATS = [
+  { k: "sales", name: "Jumlah Jualan", unit: "RM" }, { k: "phone", name: "Phone", unit: "RM" },
+  { k: "repair", name: "Repair", unit: "RM" }, { k: "aksesori", name: "Aksesori", unit: "RM" },
+  { k: "ccti", name: "CCTI Received", unit: "unit" },
+];
+const valsOf = e => ({ phone: e.phone || 0, repair: e.repair || 0, aksesori: e.aksesori || 0,
+  sales: (e.phone || 0) + (e.repair || 0) + (e.aksesori || 0), ccti: (e.cc || 0) + (e.ti || 0) });
+
+/** Metrik satu outlet sehingga tarikh thru (termasuk). RM: sasaran harian dibundarkan dulu (ikut cara laporan sedia ada). */
+function outletMetrics(o, ym, thru, entries, cuti) {
+  const cal = calendar(ym, o, cuti);
+  const first = `${ym}-01`, last = `${ym}-${pad(cal.n)}`;
+  const thruD = thru < first ? 0 : thru > last ? cal.n : Number(thru.slice(8, 10));
+  const idxThru = thruD ? cal.days[thruD - 1].idx : 0;
+  const T = { phone: o.tPhone, repair: o.hasRepair ? o.tRepair : 0, aksesori: o.tAkse, ccti: o.tCcti };
+  T.sales = T.phone + T.repair + T.aksesori;
+  const daily = {};
+  CATS.forEach(c => daily[c.k] = c.k === "ccti" ? T[c.k] / (cal.total || 1) : Math.round(T[c.k] / (cal.total || 1)));
+  const mine = entries.filter(e => e.outlet === o.code && e.date.slice(0, 7) === ym && e.date <= thru);
+  const sum = (list, k) => list.reduce((a, e) => a + valsOf(e)[k], 0);
+  const mk = (list, opAll, opThru) => {
+    const r = {};
+    CATS.forEach(c => {
+      const k = c.k, ccti = k === "ccti";
+      const target = ccti ? Math.round(T[k] * opAll / (cal.total || 1)) : daily[k] * opAll;
+      const supposed = ccti ? Math.round(T[k] * opThru / (cal.total || 1)) : daily[k] * opThru;
+      r[k] = { actual: sum(list, k), target, supposed };
+    });
+    return r;
+  };
+  const month = mk(mine, cal.total, idxThru);
+  CATS.forEach(c => month[c.k].target = T[c.k]);          // sasaran bulan penuh = nilai HQ (bukan harian x hari)
+  const weeks = {};
+  for (let w = 1; w <= 4; w++) {
+    const wd = cal.days.filter(x => weekOf(x.d) === w);
+    const opAll = wd.filter(x => x.isOp).length, opThru = wd.filter(x => x.isOp && x.date <= thru).length;
+    weeks[w] = mk(mine.filter(e => weekOf(Number(e.date.slice(8, 10))) === w), opAll, opThru);
+    weeks[w].range = [wd[0].d, wd[wd.length - 1].d]; weeks[w].opAll = opAll; weeks[w].started = wd[0].date <= thru;
+  }
+  return { cal, total: cal.total, idxThru, daily, month, weeks, T };
+}
+function aggregate(per) {
+  const add = (get) => { const r = {}; CATS.forEach(c => { r[c.k] = { actual: 0, target: 0, supposed: 0 }; per.forEach(p => { const x = get(p.m)[c.k]; r[c.k].actual += x.actual; r[c.k].target += x.target; r[c.k].supposed += x.supposed; }); }); return r; };
+  const out = { month: add(m => m.month), weeks: {} };
+  for (let w = 1; w <= 4; w++) { out.weeks[w] = add(m => m.weeks[w]); out.weeks[w].range = per[0].m.weeks[w].range; out.weeks[w].started = per[0].m.weeks[w].started; }
+  return out;
+}
+const diffOf = c => c.actual - c.supposed;
+function statusOf(c) { if (!c.target) return "na"; const d = diffOf(c); if (d >= 0) return "good"; return -d <= 0.1 * c.supposed ? "warn" : "bad"; }
+const fv = (v, unit) => unit === "RM" ? rm(v) : fmt(v) + " unit";
+const sgn = (v, unit) => (v < 0 ? "−" : "+") + fv(Math.abs(v), unit);
+
+/* ----- laporan WhatsApp (format sedia ada + Aksesori & CCTI) ----- */
+function buildReport(o, ym, date, entries, cuti, today) {
+  const m = outletMetrics(o, ym, date, entries, cuti), s = m.month.sales;
+  const e = entries.find(x => x.outlet === o.code && x.date === date) || {}, dv = valsOf(e);
+  const d = diffOf(s), st = (d < 0 ? "-RM " : "+RM ") + fmt(Math.abs(d));
+  const L = ["*TRACKING SALE PERFORMANCE*"];
+  if (date !== today) L.push("Tarikh : " + prettyDate(date));
+  L.push("", `*${o.code.toUpperCase()} ${Math.round(s.target / 1000)}k*`,
+    `Daily Target ${m.total} Days ${rm(m.daily.sales)} (${m.idxThru} Day)`, "",
+    `TS Supposed : ${rm(s.supposed)}`, `TS Today : ${rm(s.actual)}`, ` Status :  ${st}`, "", "*DAILY REPORT*");
+  if (o.hasRepair) L.push(`Repair : ${rm(dv.repair)}`);
+  L.push(`Phone : ${rm(dv.phone)}`, `Aksesori : ${rm(dv.aksesori)}`, `CCTI Received : ${fmt(dv.ccti)} unit`, "", "*MONTHLY REPORT*");
+  if (o.hasRepair) L.push(`Repair : ${rm(m.month.repair.actual)}`);
+  L.push(`Phone : ${rm(m.month.phone.actual)}`, `Aksesori : ${rm(m.month.aksesori.actual)}`,
+    `CCTI Received : ${fmt(m.month.ccti.actual)} / ${fmt(m.month.ccti.target)} unit`);
+  return L.join("\n");
+}
+
+/* =================================================================
+   DEMO BACKEND (hanya bila SCRIPT_URL kosong)
+   ================================================================= */
+const DEMO_TODAY = "2026-10-26";
+const DEMO_DB = (() => {
+  const outlets = [
+    { code: "aor", name: "Alor Setar", active: true, hasRepair: true, opensWed: false, tPhone: 155000, tRepair: 22000, tAkse: 3000, tCcti: 30 },
+    { code: "sgp", name: "Sungai Petani", active: true, hasRepair: true, opensWed: false, tPhone: 155000, tRepair: 22000, tAkse: 3000, tCcti: 30 },
+    { code: "pdg", name: "Pendang", active: true, hasRepair: false, opensWed: false, tPhone: 99000, tRepair: 0, tAkse: 1000, tCcti: 10 },
+    { code: "kll", name: "Kelang Lama", active: true, hasRepair: true, opensWed: true, tPhone: 155000, tRepair: 22000, tAkse: 3000, tCcti: 30 },
+    { code: "kul", name: "Lunas", active: false, hasRepair: true, opensWed: false, tPhone: 155000, tRepair: 22000, tAkse: 3000, tCcti: 30 },
+  ];
+  const rng = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const spread = (total, n, r) => { const w = Array.from({ length: n }, () => .55 + r() * .9), s = w.reduce((a, b) => a + b, 0);
+    const out = w.map(x => Math.round(total * x / s)); out[n - 1] += total - out.reduce((a, b) => a + b, 0); return out; };
+  const entries = [];
+  const gen = (ym, o, factor, lastDay, seed) => {
+    const cal = calendar(ym, o, []), r = rng(seed);
+    const days = cal.days.filter(x => x.isOp && x.d <= lastDay), n = days.length, idx = days[n - 1].idx;
+    const ph = spread(Math.round(o.tPhone * factor * idx / cal.total), n, r), rp = o.hasRepair ? spread(Math.round(o.tRepair * factor * idx / cal.total), n, r) : days.map(() => 0);
+    const ak = spread(Math.round(o.tAkse * factor * idx / cal.total), n, r);
+    days.forEach((x, i) => entries.push({ date: x.date, outlet: o.code, phone: ph[i], repair: rp[i], aksesori: ak[i], cc: Math.round(r() * 1.6), ti: Math.round(r()), pic: "Demo", updatedAt: x.date + " 21:30:00" }));
+  };
+  // Alor Setar Oktober: dikalibrasi supaya sama dengan contoh laporan (hari ke-23)
+  const aor = outlets[0], r0 = rng(7), cal = calendar("2026-10", aor, []);
+  const od = cal.days.filter(x => x.isOp && x.d <= 25);
+  const ph = spread(110760, od.length, r0), rp = spread(14560, od.length, r0);
+  od.forEach((x, i) => entries.push({ date: x.date, outlet: "aor", phone: ph[i], repair: rp[i], aksesori: x.d === 3 ? 40 : 0, cc: i % 4 === 0 ? 1 : 0, ti: i % 5 === 0 ? 1 : 0, pic: "Demo", updatedAt: x.date + " 21:30:00" }));
+  entries.push({ date: "2026-10-26", outlet: "aor", phone: 7701, repair: 260, aksesori: 0, cc: 1, ti: 1, pic: "Demo", updatedAt: "2026-10-26 21:30:00" });
+  gen("2026-10", outlets[1], .93, 26, 11); gen("2026-10", outlets[2], 1.04, 25, 21); gen("2026-10", outlets[3], .82, 26, 31);
+  [["aor", 1, .97, 5], ["sgp", 1, .9, 6], ["pdg", 2, 1.02, 7], ["kll", 3, .88, 8]].forEach(([c, i, f, s]) => gen("2026-09", outlets.find(o => o.code === c), f, 30, s * 13));
+  return { outlets, entries };
+})();
+function demoApi(action, p) {
+  const bad = m => { const e = new Error(m); e.server = true; throw e; };
+  const role = () => p.pin === "9999" ? "hq" : (p.pin === "1234" && p.outlet !== "*" ? "outlet" : bad("PIN salah"));
+  if (action === "bootstrap") return { ok: true, today: DEMO_TODAY, outlets: DEMO_DB.outlets.map(o => ({ code: o.code, name: o.name, active: o.active })) };
+  if (action === "login") return { ok: true, role: role() };
+  if (action === "state") {
+    const r = role(), outs = DEMO_DB.outlets.filter(o => r === "hq" || o.code === p.outlet);
+    return { ok: true, role: r, today: DEMO_TODAY, month: p.month, outlets: JSON.parse(JSON.stringify(outs)),
+      entries: JSON.parse(JSON.stringify(DEMO_DB.entries.filter(e => e.date.slice(0, 7) === p.month && outs.some(o => o.code === e.outlet)))), cuti: [] };
+  }
+  if (action === "submit") {
+    role(); const o = DEMO_DB.outlets.find(x => x.code === p.outlet);
+    const rec = { date: p.date, outlet: p.outlet, phone: num(p.phone), repair: o.hasRepair ? num(p.repair) : 0, aksesori: num(p.aksesori), cc: Math.round(num(p.cc)), ti: Math.round(num(p.ti)), pic: p.pic, updatedAt: "demo" };
+    const i = DEMO_DB.entries.findIndex(e => e.date === p.date && e.outlet === p.outlet);
+    i >= 0 ? DEMO_DB.entries[i] = rec : DEMO_DB.entries.push(rec);
+    return { ok: true, edited: i >= 0, sync: "DEMO", entry: rec };
+  }
+  bad("Action tak dikenali");
+}
+async function api(action, payload = {}) {
+  if (DEMO) return demoApi(action, payload);
+  const res = await fetch(SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ action, ...payload }) });
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  const j = await res.json();
+  if (!j.ok) { const e = new Error(j.error || "Ralat"); e.server = true; throw e; }
+  return j;
+}
+const isNetErr = e => !e.server;
+
+/* =================================================================
+   STATE
+   ================================================================= */
+const S = {
+  outlets: [], today: localToday(), scope: "", tab: "today", viewMonth: "", week: 0,
+  auth: store.get("ksales_auth", {}), cache: {}, draft: null, hqDate: "", pendingScope: "",
+  device: store.get("ksales_dev", null) || (() => { const d = "d" + Math.random().toString(36).slice(2, 10); store.set("ksales_dev", d); return d; })(),
+  queue: store.get("ksales_q", []),
+};
+const curYM = () => S.today.slice(0, 7);
+const outletByCode = c => S.outlets.find(o => o.code === c);
+function authFor(scope) { if (S.auth["*"]) return { pin: S.auth["*"].pin, pic: S.auth["*"].pic, role: "hq" };
+  if (scope !== "*" && S.auth[scope]) return { pin: S.auth[scope].pin, pic: S.auth[scope].pic, role: "outlet" }; return null; }
+function toast(msg, ms = 2600) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), ms); }
+const lastMonths = () => { const [y, m] = curYM().split("-").map(Number); return [0, 1, 2, 3].map(i => { const d = new Date(Date.UTC(y, m - 1 - i, 1)); return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}`; }); };
+const ymLabel = ym => { const [y, m] = ym.split("-").map(Number); return `${MS[m - 1]} ${y}`; };
+
+async function loadMonth(ym, force) {
+  if (S.cache[ym] && !force) return S.cache[ym];
+  const a = authFor(S.scope); if (!a) throw Object.assign(new Error("Perlu PIN"), { server: true });
+  try {
+    const j = await api("state", { outlet: a.role === "hq" ? "*" : S.scope, pin: a.pin, month: ym });
+    S.cache[ym] = j; return j;
+  } catch (e) {
+    if (e.server && /PIN/i.test(e.message)) { delete S.auth[a.role === "hq" ? "*" : S.scope]; store.set("ksales_auth", S.auth); updateAuthBtn(); }
+    throw e;
+  }
+}
+function applyEntry(ent) {
+  const c = S.cache[ent.date.slice(0, 7)]; if (!c) return;
+  const i = c.entries.findIndex(e => e.date === ent.date && e.outlet === ent.outlet);
+  i >= 0 ? c.entries[i] = ent : c.entries.push(ent);
+}
+/** Entri + draf (supaya hero kemas kini masa menaip). */
+function entriesWithDraft(ym, o) {
+  const c = S.cache[ym]; let list = c.entries.slice();
+  const d = S.draft;
+  if (d && o && d.date.slice(0, 7) === ym) {
+    list = list.filter(e => !(e.date === d.date && e.outlet === o.code));
+    list.push({ date: d.date, outlet: o.code, phone: num(d.phone), repair: o.hasRepair ? num(d.repair) : 0, aksesori: num(d.aksesori), cc: Math.round(num(d.cc)), ti: Math.round(num(d.ti)) });
+  }
+  return list;
+}
+function scopeData(ym, thru, withDraft) {
+  const c = S.cache[ym];
+  const outs = S.scope === "*" ? c.outlets.filter(o => o.active) : c.outlets.filter(o => o.code === S.scope);
+  const per = outs.map(o => ({ o, m: outletMetrics(o, ym, thru, withDraft ? entriesWithDraft(ym, o) : c.entries, c.cuti) }));
+  return { c, per, agg: per.length ? aggregate(per) : null };
+}
+const thruFor = ym => ym === curYM() ? S.today : ym < curYM() ? `${ym}-${pad(dim(...ym.split("-").map(Number)))}` : `${ym}-00`;
+
+/* =================================================================
+   UI: header / auth
+   ================================================================= */
+function fillSelect() {
+  const sel = $("outletSelect"); const keep = sel.value;
+  sel.innerHTML = '<option value="">Pilih outlet</option><option value="*">★ HQ · Semua outlet</option>' +
+    S.outlets.filter(o => o.active).map(o => `<option value="${o.code}">${esc(o.name)}</option>`).join("");
+  sel.value = keep;
+}
+function updateAuthBtn() {
+  const a = S.scope ? authFor(S.scope) : (S.auth["*"] || null);
+  $("authLbl").textContent = a ? (a.pic || "PIC") : "PIN";
+}
+function openPin(scope) {
+  S.pendingScope = scope;
+  const hq = scope === "*"; const o = outletByCode(scope);
+  $("pinTitle").textContent = hq ? "PIN HQ" : "Masuk PIN outlet";
+  $("pinHint").textContent = hq ? "PIN HQ boleh tengok semua outlet dan edit mana-mana tarikh." : `${o ? o.name : ""}: PIN diberi oleh HQ. Sekali sahaja untuk phone ini.`;
+  $("pinPic").value = (authFor(scope) || {}).pic || store.get("ksales_pic", "");
+  $("pinVal").value = ""; $("pinErr").textContent = "";
+  $("pinOutRow").classList.toggle("hidden", !Object.keys(S.auth).length);
+  $("pinModal").classList.add("show"); setTimeout(() => $("pinVal").focus(), 60);
+}
+async function confirmPin() {
+  const scope = S.pendingScope, pin = $("pinVal").value.trim(), pic = $("pinPic").value.trim();
+  if (!pic) { $("pinErr").textContent = "Isi nama PIC."; return; }
+  if (!pin) { $("pinErr").textContent = "Isi PIN."; return; }
+  $("pinOk").disabled = true; $("pinErr").textContent = "";
+  try {
+    const r = await api("login", { outlet: scope, pin });
+    S.auth[r.role === "hq" ? "*" : scope] = { pin, pic }; store.set("ksales_auth", S.auth); store.set("ksales_pic", pic);
+    S.cache = {}; $("pinModal").classList.remove("show"); await selectScope(scope);
+  } catch (e) { $("pinErr").textContent = isNetErr(e) ? "Tiada talian. Cuba lagi." : e.message; }
+  finally { $("pinOk").disabled = false; }
+}
+async function selectScope(scope) {
+  S.scope = scope; localStorage && store.set("ksales_scope", scope);
+  $("outletSelect").value = scope; updateAuthBtn();
+  if (!scope) { $("emptyState").style.display = ""; $("trackerArea").style.display = "none"; return; }
+  if (!authFor(scope)) { $("outletSelect").value = ""; S.scope = ""; openPin(scope); return; }
+  $("emptyState").style.display = "none"; $("trackerArea").style.display = "block";
+  $("tabTodayLbl").textContent = scope === "*" ? "Ringkasan" : "Hari Ini";
+  S.viewMonth = curYM(); S.week = 0; S.draft = null; S.hqDate = S.today;
+  await render();
+}
+
+/* =================================================================
+   RENDER
+   ================================================================= */
+function setTab(t) { S.tab = t; document.querySelectorAll("#kindToggle button").forEach(b => b.classList.toggle("on", b.dataset.tab === t)); render(); }
+async function render() {
+  const v = $("view"); const ym = S.tab === "today" ? curYM() : S.viewMonth;
+  let dateYM = ym;
+  if (S.tab === "today" && S.scope !== "*" && S.draft) dateYM = S.draft.date.slice(0, 7);
+  if (!S.cache[dateYM]) v.innerHTML = '<div class="mload">Memuat…</div>';
+  try { await loadMonth(curYM()); if (dateYM !== curYM()) await loadMonth(dateYM); if (ym !== dateYM && ym !== curYM()) await loadMonth(ym); }
+  catch (e) { v.innerHTML = `<div class="card"><div class="mload">${esc(isNetErr(e) ? "Tiada talian. Tarik semula bila ada internet." : e.message)}</div></div>`; if (e.server && /PIN/i.test(e.message)) { S.scope = ""; selectScope($("outletSelect").value || ""); } return; }
+  if (S.tab === "today") S.scope === "*" ? renderHqToday(v) : renderToday(v);
+  else if (S.tab === "month") renderMonth(v);
+  else renderScore(v);
+  $("foot").innerHTML = DEMO ? "" : "Data jualan disimpan dalam sheet tracker. CC/TI received disalin ke master HQ.";
+}
+
+function heroHTML(eyebrow, c, extra) {
+  const d = diffOf(c), st = d >= 0 ? "s-ok" : (-d <= 0.1 * c.supposed ? "s-warn" : "s-bad");
+  const pct = c.target ? Math.min(100, c.actual / c.target * 100) : 0, pace = c.target ? Math.min(100, c.supposed / c.target * 100) : 0;
+  return `<div class="hero"><div class="eyebrow">${eyebrow}</div><div class="big">${rm(c.actual)}</div>
+    <div class="sub2">${extra}</div>
+    <div class="hbar"><i style="width:${pct}%"></i><span class="pace" style="left:${pace}%"></span></div>
+    <div class="legend"><span>${pct.toFixed(0)}% daripada sasaran ${rm(c.target)}</span><span>▎ sepatutnya ${rm(c.supposed)}</span></div>
+    <div class="statusCard ${st}"><span class="dot"></span><span>${d >= 0 ? "Lebih" : "Kurang"} <b>${rm(Math.abs(d))}</b> ${d >= 0 ? "daripada" : "berbanding"} sepatutnya</span></div></div>`;
+}
+
+/* ----- Hari Ini (outlet) ----- */
+function ensureDraft(o) {
+  if (S.draft && S.draft.outlet === o.code) return;
+  S.draft = { outlet: o.code, date: S.today };
+  loadDraft(o);
+}
+function loadDraft(o) {
+  const c = S.cache[S.draft.date.slice(0, 7)], e = c && c.entries.find(x => x.date === S.draft.date && x.outlet === o.code);
+  Object.assign(S.draft, e ? { phone: e.phone, repair: e.repair, aksesori: e.aksesori, cc: e.cc, ti: e.ti, saved: e }
+                           : { phone: "", repair: "", aksesori: "", cc: "", ti: "", saved: null });
+}
+function renderToday(v) {
+  const o = S.cache[curYM()].outlets.find(x => x.code === S.scope); if (!o) { v.innerHTML = ""; return; }
+  ensureDraft(o);
+  const d = S.draft, isPast = d.date !== S.today;
+  const auth = authFor(S.scope), minDate = auth.role === "hq" ? "" : (() => { const [y, m] = curYM().split("-").map(Number); const x = new Date(Date.UTC(y, m - 2, 1)); return `${x.getUTCFullYear()}-${pad(x.getUTCMonth() + 1)}-01`; })();
+  const f = (id, cls, label, ic, unit, val) => `<div class="fld ${cls}"><label for="${id}"><span class="ic">${ic}</span>${label}</label><div class="inp"><small>${unit}</small><input id="${id}" type="text" inputmode="decimal" autocomplete="off" placeholder="0" value="${esc(val)}"></div></div>`;
+  v.innerHTML = `<div id="heroBox"></div>
+   <div class="card"><div class="hd"><span class="ttl">${ICON.send}Laporan jualan</span><span id="savedChip"></span></div>
+     <label class="lbl" for="inpDate" style="margin-top:8px">Tarikh</label>
+     <input class="datef" id="inpDate" type="date" value="${d.date}" max="${S.today}" ${minDate ? `min="${minDate}"` : ""}>
+     <div id="editBar"></div>
+     <div class="fgrid">
+       ${f("inpPhone", "c-phone", "Phone", ICON.phone, "RM", d.phone)}
+       ${o.hasRepair ? f("inpRepair", "c-repair", "Repair", ICON.repair, "RM", d.repair) : ""}
+       ${f("inpAkse", "c-akse", "Aksesori", ICON.akse, "RM", d.aksesori)}
+       ${f("inpCC", "c-cc", "CC diterima", ICON.cc, "unit", d.cc)}
+       ${f("inpTI", "c-cc", "TI diterima", ICON.cc, "unit", d.ti)}
+     </div>
+     <div class="dline" id="dline"></div>
+     <button class="btn primary big" id="btnSend" type="button">${ICON.send}Simpan &amp; Hantar Laporan</button>
+     <div class="row2"><button class="btn ghost" id="btnView" type="button">${ICON.eye}Lihat laporan</button><button class="btn ghost" id="btnClear" type="button">Kosongkan borang</button></div>
+   </div>`;
+  const bind = (id, key) => $(id) && $(id).addEventListener("input", e => { S.draft[key] = e.target.value; updateLive(o); });
+  bind("inpPhone", "phone"); bind("inpRepair", "repair"); bind("inpAkse", "aksesori"); bind("inpCC", "cc"); bind("inpTI", "ti");
+  $("inpDate").addEventListener("change", async e => {
+    if (!e.target.value) return; S.draft.date = e.target.value;
+    try { await loadMonth(S.draft.date.slice(0, 7)); } catch (er) { toast(er.message); return; }
+    loadDraft(o); renderToday(v);
+  });
+  $("btnSend").onclick = () => sendReport(o); $("btnView").onclick = () => showReport(o, false);
+  $("btnClear").onclick = () => { Object.assign(S.draft, { phone: "", repair: "", aksesori: "", cc: "", ti: "" }); renderToday(v); };
+  updateLive(o);
+}
+function updateLive(o) {
+  const d = S.draft, ym = d.date.slice(0, 7), isPast = d.date !== S.today;
+  const m = outletMetrics(o, ym, d.date, entriesWithDraft(ym, o), S.cache[ym].cuti), s = m.month.sales;
+  const dayTot = num(d.phone) + (o.hasRepair ? num(d.repair) : 0) + num(d.aksesori), ccti = Math.round(num(d.cc)) + Math.round(num(d.ti));
+  $("heroBox").innerHTML = heroHTML(`Hari ke-${m.idxThru} / ${m.total} · ${MONTHS[Number(ym.slice(5)) - 1]}`, s,
+    `${o.name} · sasaran ${o.code.toUpperCase()} ${Math.round(s.target / 1000)}k · harian ${rm(m.daily.sales)}`);
+  $("dline").innerHTML = `<span>Jumlah jualan hari ni <b>${rm(dayTot)}</b></span><span>CCTI received <b>${ccti} unit</b></span>`;
+  $("savedChip").innerHTML = d.saved ? `<span class="chip ok">✓ Dihantar${d.saved.pic ? " · " + esc(d.saved.pic) : ""}</span>` : '<span class="chip no">Belum dihantar</span>';
+  $("editBar").innerHTML = (isPast || d.saved) ? `<div class="editbar">${isPast ? `Edit tarikh <b>${prettyDate(d.date)}</b>. ` : ""}${d.saved ? "Nombor baru <b>ganti</b> yang lama, bukan tambah." : "Tarikh ini belum ada data."}</div>` : "";
+}
+function readyToSend(o) {
+  const d = S.draft, miss = [["phone", "Phone"], ...(o.hasRepair ? [["repair", "Repair"]] : []), ["aksesori", "Aksesori"], ["cc", "CC"], ["ti", "TI"]].filter(([k]) => String(d[k] ?? "").trim() === "");
+  if (miss.length) { toast("Isi semua ruangan (taip 0 kalau tiada): " + miss.map(x => x[1]).join(", "), 3600); return false; }
+  return true;
+}
+function payloadFor(o) {
+  const d = S.draft, a = authFor(S.scope);
+  return { outlet: o.code, date: d.date, phone: num(d.phone), repair: o.hasRepair ? num(d.repair) : 0, aksesori: num(d.aksesori), cc: Math.round(num(d.cc)), ti: Math.round(num(d.ti)), pin: a.pin, pic: a.pic, device: S.device };
+}
+async function sendReport(o) {
+  if (!readyToSend(o)) return;
+  const btn = $("btnSend"); btn.disabled = true; const p = payloadFor(o); let queued = false;
+  try { const r = await api("submit", p); applyEntry(r.entry); S.draft.saved = r.entry;
+    toast(/^(OK|DEMO)/.test(r.sync || "") || !r.sync ? (r.edited ? "Ditukar & disimpan ke sheet" : "Disimpan ke sheet") : "Disimpan. CCTI ke master: " + r.sync, 3200);
+  } catch (e) {
+    if (isNetErr(e)) { S.queue.push(p); store.set("ksales_q", S.queue); queued = true;
+      const ent = { date: p.date, outlet: p.outlet, phone: p.phone, repair: p.repair, aksesori: p.aksesori, cc: p.cc, ti: p.ti, pic: p.pic }; applyEntry(ent); S.draft.saved = ent;
+      toast("Tiada talian. Disimpan dalam phone, akan dihantar bila online.", 4000);
+    } else { toast(e.message, 4000); btn.disabled = false; return; }
+  }
+  btn.disabled = false; updateLive(o); showReport(o, true);
+}
+async function flushQueue() {
+  if (!S.queue.length || !navigator.onLine) return;
+  const rest = [];
+  for (const p of S.queue) { try { const r = await api("submit", p); applyEntry(r.entry); } catch (e) { if (isNetErr(e)) rest.push(p); } }
+  const sent = S.queue.length - rest.length; S.queue = rest; store.set("ksales_q", rest);
+  if (sent) toast(`${sent} laporan tertangguh dah dihantar`);
+}
+
+/* ----- laporan modal ----- */
+let REP = "";
+function showReport(o, saved) {
+  const d = S.draft, ym = d.date.slice(0, 7);
+  REP = buildReport(o, ym, d.date, entriesWithDraft(ym, o), S.cache[ym].cuti, S.today);
+  $("repTitle").textContent = saved ? "Laporan disimpan. Hantar ke group" : "Pratonton laporan";
+  $("repTxt").textContent = REP; $("repModal").classList.add("show");
+}
+async function copyTxt(t) {
+  try { await navigator.clipboard.writeText(t); return true; } catch (e) {}
+  try { const ta = document.createElement("textarea"); ta.value = t; ta.style.cssText = "position:fixed;opacity:0"; document.body.appendChild(ta); ta.select(); const ok = document.execCommand("copy"); ta.remove(); return ok; } catch (e) { return false; }
+}
+
+/* ----- Ringkasan HQ ----- */
+function renderHqToday(v) {
+  const date = S.hqDate || S.today, ym = date.slice(0, 7), c = S.cache[ym];
+  const { per, agg } = scopeData(ym, date, false);
+  const sent = per.filter(p => c.entries.some(e => e.outlet === p.o.code && e.date === date)).length;
+  const rows = per.map(p => {
+    const e = c.entries.find(x => x.outlet === p.o.code && x.date === date), s = p.m.month.sales, d = diffOf(s), day = e ? valsOf(e) : null, st = statusOf(s);
+    const open = p.m.cal.days[Number(date.slice(8)) - 1].isOp;
+    return `<div class="ocard" data-o="${p.o.code}"><div class="n">${esc(p.o.name)}<small>${e ? `Phone ${rm(day.phone)}${p.o.hasRepair ? ` · Repair ${rm(day.repair)}` : ""} · Akse ${rm(day.aksesori)} · CCTI ${day.ccti}` : (open ? "Belum hantar laporan" : "Tutup hari ini")}</small></div>
+      <div class="r"><b>${e ? rm(day.sales) : "–"}</b><span class="pill st-${st}">${d >= 0 ? "+" : "−"}${rm(Math.abs(d))}</span></div></div>`;
+  }).join("");
+  v.innerHTML = heroHTML(`Semua outlet · setakat ${shortDate(date)}`, agg.month.sales, `${sent} / ${per.length} outlet dah hantar laporan ${shortDate(date)}`) +
+    `<div class="card"><label class="lbl" for="hqDate">Tarikh</label><input class="datef" id="hqDate" type="date" value="${date}" max="${S.today}">
+      <div style="margin-top:8px">${rows}</div><div class="mnote">Tekan outlet untuk buka borang / edit. Pill = surplus (+) atau deficit (−) berbanding sepatutnya.</div></div>`;
+  $("hqDate").addEventListener("change", async e => { if (!e.target.value) return; S.hqDate = e.target.value; try { await loadMonth(S.hqDate.slice(0, 7)); } catch (er) { toast(er.message); return; } renderHqToday(v); });
+  v.querySelectorAll(".ocard").forEach(el => el.onclick = async () => { const code = el.dataset.o; S.scope = code; $("outletSelect").value = code; S.draft = null; S.draft = { outlet: code, date: S.hqDate }; $("tabTodayLbl").textContent = "Hari Ini";
+    await loadMonth(S.hqDate.slice(0, 7)); loadDraft(outletByCode2(code)); updateAuthBtn(); render(); });
+}
+const outletByCode2 = code => S.cache[curYM()].outlets.find(o => o.code === code);
+
+/* ----- Bulanan ----- */
+function monthChips() { return `<div class="mchips">${lastMonths().map(m => `<button class="mchip ${m === S.viewMonth ? "on" : ""}" data-m="${m}" type="button">${ymLabel(m)}</button>`).join("")}</div>`; }
+function bindMonthChips(v) { v.querySelectorAll(".mchip").forEach(b => b.onclick = () => { S.viewMonth = b.dataset.m; S.week = 0; render(); }); }
+function renderMonth(v) {
+  const ym = S.viewMonth, thru = thruFor(ym), { c, per, agg } = scopeData(ym, thru, false);
+  if (!per.length) { v.innerHTML = monthChips() + '<div class="card"><div class="mload">Tiada outlet.</div></div>'; bindMonthChips(v); return; }
+  const single = per.length === 1, s = agg.month.sales;
+  const eyebrow = single ? `Hari ke-${per[0].m.idxThru} / ${per[0].m.total} · ${MONTHS[Number(ym.slice(5)) - 1]}` : `Semua outlet · ${MONTHS[Number(ym.slice(5)) - 1]}`;
+  let html = monthChips() + heroHTML(eyebrow, s, single ? `${per[0].o.name} · harian ${rm(per[0].m.daily.sales)}` : `${per.length} outlet aktif`);
+  html += `<div class="card"><div class="sgrp">Ikut kategori</div>${CATS.filter(x => x.k !== "sales").map(x => rowHTML(x.name, x.unit, agg.month[x.k])).join("")}</div>`;
+  if (!single) html += `<div class="card"><div class="sgrp">Ikut outlet</div>${per.map(p => `<div class="ocard" style="cursor:default"><div class="n">${esc(p.o.name)}<small>Sasaran ${rm(p.m.month.sales.target)} · hari ${p.m.idxThru}/${p.m.total}</small></div><div class="r"><b>${rm(p.m.month.sales.actual)}</b><span class="pill st-${statusOf(p.m.month.sales)}">${sgn(diffOf(p.m.month.sales), "RM")}</span></div></div>`).join("")}</div>`;
+  // jadual harian
+  const [y, mo] = ym.split("-").map(Number), n = dim(y, mo), lastD = thru.startsWith(ym) ? Number(thru.slice(8)) : 0, rows = [];
+  const tot = { phone: 0, repair: 0, aksesori: 0, ccti: 0, sales: 0 };
+  for (let d = lastD; d >= 1; d--) {
+    const date = `${ym}-${pad(d)}`, es = c.entries.filter(e => e.date === date && per.some(p => p.o.code === e.outlet));
+    const openN = per.filter(p => p.m.cal.days[d - 1].isOp).length, wd = DOW[dowOf(y, mo, d)];
+    if (!es.length) { rows.push(openN ? `<tr class="miss"><td>${d} ${wd}</td><td colspan="5" style="text-align:right">belum hantar${single ? "" : ` (0/${openN})`}</td></tr>` : `<tr class="off"><td>${d} ${wd}</td><td colspan="5" style="text-align:right">tutup</td></tr>`); continue; }
+    const t = es.reduce((a, e) => { const v2 = valsOf(e); Object.keys(a).forEach(k => a[k] += v2[k]); return a; }, { phone: 0, repair: 0, aksesori: 0, ccti: 0, sales: 0 });
+    Object.keys(tot).forEach(k => tot[k] += t[k]);
+    rows.push(`<tr><td>${d} ${wd}${single ? "" : `<small>${es.length}/${openN} outlet</small>`}</td><td>${fmt(t.phone)}</td><td>${fmt(t.repair)}</td><td>${fmt(t.aksesori)}</td><td>${t.ccti}</td><td><b>${fmt(t.sales)}</b></td></tr>`);
+  }
+  html += `<div class="card"><div class="sgrp">Harian (RM)</div><table class="dtab"><thead><tr><th>Tarikh</th><th>Phone</th><th>Repair</th><th>Akse</th><th>CCTI</th><th>Jumlah</th></tr></thead><tbody>
+    <tr class="tot"><td>Jumlah</td><td>${fmt(tot.phone)}</td><td>${fmt(tot.repair)}</td><td>${fmt(tot.aksesori)}</td><td>${tot.ccti}</td><td>${fmt(tot.sales)}</td></tr>${rows.join("")}</tbody></table>
+    <div class="mnote">Hari operasi ditolak Rabu${per.some(p => p.o.opensWed) ? " (Kelang Lama buka setiap hari)" : ""} dan hari cuti. Baris kuning = hari buka yang belum ada laporan.</div></div>`;
+  v.innerHTML = html; bindMonthChips(v);
+}
+
+/* ----- Skor ----- */
+function rowHTML(name, unit, c) {
+  const st = statusOf(c), d = diffOf(c), sym = { good: "✓", warn: "!", bad: "✕", na: "–" }[st];
+  if (!c.target) return `<div class="srow"><div class="t"><span class="ic na">–</span><div class="n">${name}<small>Tiada sasaran / tidak berkenaan</small></div><div class="a"><b>${fv(c.actual, unit)}</b></div></div></div>`;
+  const pct = Math.min(100, c.actual / c.target * 100), pace = Math.min(100, c.supposed / c.target * 100), left = c.target - c.actual;
+  const why = `${d >= 0 ? "Lebih" : "Kurang"} ${fv(Math.abs(d), unit)} daripada sepatutnya (${fv(c.supposed, unit)})` + (left > 0 ? ` · baki ${fv(left, unit)} ke sasaran` : " · sasaran dicapai");
+  return `<div class="srow"><div class="t"><span class="ic ${st}">${sym}</span><div class="n">${name}<small>Sasaran ${fv(c.target, unit)}</small></div>
+    <div class="a"><b>${fv(c.actual, unit)}</b><span class="pill st-${st}">${sgn(d, unit)}</span></div></div>
+    <div class="bar"><i class="${st}" style="width:${pct}%"></i><span class="pace" style="left:${pace}%"></span></div><div class="why">${why}</div></div>`;
+}
+function ring(p, st) { const r = 32, C = 2 * Math.PI * r, off = C * (1 - Math.min(1, p));
+  return `<div class="sring ${st}" style="position:relative;width:76px;height:76px;flex:none"><svg viewBox="0 0 76 76" style="width:76px;height:76px;transform:rotate(-90deg)"><circle cx="38" cy="38" r="${r}" fill="none" stroke="var(--surface-2)" stroke-width="8"/><circle cx="38" cy="38" r="${r}" fill="none" stroke="var(--${st === "na" ? "muted" : st})" stroke-width="8" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${off}"/></svg>
+  <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;letter-spacing:-.02em">${Math.round(p * 100)}<small style="font-size:12px;color:var(--muted)">%</small></div></div>`; }
+function renderScore(v) {
+  const ym = S.viewMonth, thru = thruFor(ym), { per, agg } = scopeData(ym, thru, false);
+  if (!per.length) { v.innerHTML = monthChips() + '<div class="card"><div class="mload">Tiada outlet.</div></div>'; bindMonthChips(v); return; }
+  const single = per.length === 1, s = agg.month.sales, st = statusOf(s), d = diffOf(s);
+  const curW = ym === curYM() ? weekOf(Number(S.today.slice(8))) : ym < curYM() ? 4 : 1;
+  const w = S.week || curW, W = agg.weeks[w];
+  let html = monthChips();
+  html += `<div class="card"><div style="display:flex;align-items:center;gap:16px">${ring(s.target ? s.actual / s.target : 0, st)}<div><div class="lbl" style="margin:0">Pencapaian ${MONTHS[Number(ym.slice(5)) - 1]}</div>
+    <div style="font-size:17px;font-weight:700;line-height:1.3;margin-top:2px">${rm(s.actual)} <span style="color:var(--muted);font-weight:600">/ ${rm(s.target)}</span></div>
+    <div style="font-size:12.5px;color:var(--text-2);margin-top:4px">${d >= 0 ? "Surplus" : "Deficit"} <b>${rm(Math.abs(d))}</b> berbanding sepatutnya setakat ${thru.startsWith(ym) ? shortDate(thru) : "akhir bulan"}.</div></div></div></div>`;
+  html += `<h2>Mingguan</h2><div class="mchips" style="margin-top:0">${[1, 2, 3, 4].map(i => { const r = agg.weeks[i].range; return `<button class="mchip ${i === w ? "on" : ""}" data-w="${i}" type="button">W${i} · ${r[0]}–${r[1]}</button>`; }).join("")}</div>`;
+  html += `<div class="card"><div class="sgrp">Minggu ${w} (${W.range[0]}–${W.range[1]} ${MS[Number(ym.slice(5)) - 1]})</div>${W.started ? CATS.map(x => rowHTML(x.name, x.unit, W[x.k])).join("") : '<div class="mload">Minggu ini belum bermula.</div>'}
+    <div class="mnote">Sasaran minggu = sasaran harian × hari operasi dalam minggu. W1: 1–7, W2: 8–14, W3: 15–21, W4: 22–akhir bulan.</div></div>`;
+  html += `<h2>Bulanan</h2><div class="card"><div class="sgrp">${MONTHS[Number(ym.slice(5)) - 1]} ${ym.slice(0, 4)}</div>${CATS.map(x => rowHTML(x.name, x.unit, agg.month[x.k])).join("")}</div>`;
+  if (!single) html += `<h2>Perbandingan outlet</h2><div class="card">${per.map(p => { const ms = p.m.month.sales; return rowHTML(p.o.name + " · bulan", "RM", ms); }).join("")}</div>`;
+  v.innerHTML = html; bindMonthChips(v);
+  v.querySelectorAll("[data-w]").forEach(b => b.onclick = () => { S.week = Number(b.dataset.w); renderScore(v); });
+}
+
+/* =================================================================
+   INIT
+   ================================================================= */
+$("outletSelect").addEventListener("change", e => selectScope(e.target.value));
+$("authBtn").onclick = () => openPin(S.scope || "*");
+$("pinCancel").onclick = () => { $("pinModal").classList.remove("show"); $("outletSelect").value = S.scope; };
+$("pinOk").onclick = confirmPin; $("pinVal").addEventListener("keydown", e => { if (e.key === "Enter") confirmPin(); });
+$("pinLogout").onclick = () => { S.auth = {}; store.set("ksales_auth", {}); S.cache = {}; $("pinModal").classList.remove("show"); selectScope(""); toast("Dah log keluar"); };
+$("repClose").onclick = () => $("repModal").classList.remove("show");
+$("repCopy").onclick = async () => toast((await copyTxt(REP)) ? "Laporan disalin" : "Tak dapat salin, tekan lama pada teks");
+$("repWa").onclick = async () => { await copyTxt(REP); toast("Laporan disalin. Buka WhatsApp…"); window.open("https://wa.me/?text=" + encodeURIComponent(REP), "_blank"); };
+document.querySelectorAll("#kindToggle button").forEach(b => b.onclick = () => setTab(b.dataset.tab));
+document.querySelectorAll(".modal-overlay").forEach(m => m.addEventListener("click", e => { if (e.target === m) m.classList.remove("show"); }));
+document.addEventListener("visibilitychange", () => { if (!document.hidden && S.scope) { flushQueue(); loadMonth(curYM(), true).then(() => { if (S.tab !== "today" || S.scope === "*" || !document.activeElement || !/INPUT/.test(document.activeElement.tagName)) render(); }).catch(() => {}); } });
+window.addEventListener("online", flushQueue);
+$("logoImg").onerror = function () { const s = document.createElement("div"); s.className = "logo-txt"; s.textContent = "kliki"; this.replaceWith(s); };
+
+(async function init() {
+  $("dateTag").textContent = prettyDate(S.today);
+  if (DEMO) { $("demoBar").style.display = "block"; $("demoBar").innerHTML = "<b>MOD DEMO</b> · data contoh sahaja. PIN outlet <b>1234</b>, PIN HQ <b>9999</b>. Isi SCRIPT_URL untuk guna sheet sebenar."; }
+  try { const b = await api("bootstrap"); S.outlets = b.outlets; S.today = b.today; $("dateTag").textContent = prettyDate(S.today); }
+  catch (e) { $("emptyState").innerHTML = '<b>Tak dapat sambung ke server</b>Semak internet atau SCRIPT_URL, kemudian muat semula.'; return; }
+  fillSelect(); updateAuthBtn(); flushQueue();
+  const last = store.get("ksales_scope", ""); if (last && (last === "*" || outletByCode(last)) && authFor(last)) selectScope(last);
+})();
+</script>
+</body>
+</html>
