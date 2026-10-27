@@ -374,7 +374,7 @@ function buildReport(o, ym, date, entries, cuti, today) {
   const L = ["*TRACKING SALE PERFORMANCE*"];
   if (date !== today) L.push("Tarikh : " + prettyDate(date));
   L.push("", `*${o.code.toUpperCase()} ${Math.round(s.target / 1000)}k*`,
-    `Daily Target ${m.total} Days ${rm(m.daily.sales)} (${m.idxThru} Day)`, "",
+    `Daily Target ${m.total} Days ${rm(m.daily.sales)} (${m.idxThru} Day)`, `Baki Hari Operasi : ${m.total - m.idxThru} hari`, "",
     `TS Supposed : ${rm(s.supposed)}`, `TS Today : ${rm(s.actual)}`, `Status : ${st}`, "", "*DAILY REPORT*");
   if (o.hasRepair) L.push(`Repair : ${rm(dv.repair)}`);
   L.push(`Phone : ${rm(dv.phone)}`, `Aksesori : ${rm(dv.aksesori)}`, `CCTI Received : ${fmt(dv.ccti)} unit`, "", "*MONTHLY REPORT*");
