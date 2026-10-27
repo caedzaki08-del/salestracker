@@ -318,6 +318,7 @@ const CATS = [
 const valsOf = e => ({ phone: e.phone || 0, repair: e.repair || 0, aksesori: e.aksesori || 0,
   sales: (e.phone || 0) + (e.repair || 0) + (e.aksesori || 0), ccti: (e.cc || 0) + (e.ti || 0) });
 
+const WEEK_PCT = [0.25, 0.24, 0.21, 0.30];   // W1–W4 daripada sasaran bulanan, mulai Nov 2026
 /** Metrik satu outlet sehingga tarikh thru (termasuk). RM: sasaran harian dibundarkan dulu (ikut cara laporan sedia ada). */
 function outletMetrics(o, ym, thru, entries, cuti) {
   const cal = calendar(ym, o, cuti);
@@ -347,6 +348,9 @@ function outletMetrics(o, ym, thru, entries, cuti) {
     const wd = cal.days.filter(x => weekOf(x.d) === w);
     const opAll = wd.filter(x => x.isOp).length, opThru = wd.filter(x => x.isOp && x.date <= thru).length;
     weeks[w] = mk(mine.filter(e => weekOf(Number(e.date.slice(8, 10))) === w), opAll, opThru);
+    // Sasaran minggu = % tetap daripada sasaran bulanan (bukan ikut hari operasi). Okt 2026 dan sebelumnya sama rata (25%).
+    const pct = (ym >= "2026-11" ? WEEK_PCT : [0.25, 0.25, 0.25, 0.25])[w - 1];
+    CATS.forEach(c => { const t = Math.round(T[c.k] * pct); weeks[w][c.k].target = t; weeks[w][c.k].supposed = t; });
     weeks[w].range = [wd[0].d, wd[wd.length - 1].d]; weeks[w].opAll = opAll; weeks[w].started = wd[0].date <= thru;
   }
   return { cal, total: cal.total, idxThru, daily, month, weeks, T };
@@ -747,7 +751,7 @@ function renderScore(v) {
     <div style="font-size:12.5px;color:var(--text-2);margin-top:4px">${d >= 0 ? "Surplus" : "Deficit"} <b>${rm(Math.abs(d))}</b> berbanding sepatutnya setakat ${thru.startsWith(ym) ? shortDate(thru) : "akhir bulan"}.</div></div></div></div>`;
   html += `<h2>Mingguan</h2><div class="mchips" style="margin-top:0">${[1, 2, 3, 4].map(i => { const r = agg.weeks[i].range; return `<button class="mchip ${i === w ? "on" : ""}" data-w="${i}" type="button">W${i} · ${r[0]}–${r[1]}</button>`; }).join("")}</div>`;
   html += `<div class="card"><div class="sgrp">Minggu ${w} (${W.range[0]}–${W.range[1]} ${MS[Number(ym.slice(5)) - 1]})</div>${W.started ? CATS.map(x => rowHTML(x.name, x.unit, W[x.k])).join("") : '<div class="mload">Minggu ini belum bermula.</div>'}
-    <div class="mnote">Sasaran minggu = sasaran harian × hari operasi dalam minggu. W1: 1–7, W2: 8–14, W3: 15–21, W4: 22–akhir bulan.</div></div>`;
+    <div class="mnote">Sasaran minggu = peratus tetap daripada sasaran bulan (mulai Nov 2026: W1 25%, W2 24%, W3 21%, W4 30%; sebelum itu sama rata 25%). Minggu belum habis dibanding sasaran penuh. W1: 1–7, W2: 8–14, W3: 15–21, W4: 22–akhir bulan.</div></div>`;
   html += `<h2>Bulanan</h2><div class="card"><div class="sgrp">${MONTHS[Number(ym.slice(5)) - 1]} ${ym.slice(0, 4)}</div>${CATS.map(x => rowHTML(x.name, x.unit, agg.month[x.k])).join("")}</div>`;
   if (!single) html += `<h2>Perbandingan outlet</h2><div class="card">${per.map(p => { const ms = p.m.month.sales; return rowHTML(p.o.name + " · bulan", "RM", ms); }).join("")}</div>`;
   v.innerHTML = html; bindMonthChips(v);
