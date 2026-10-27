@@ -369,22 +369,18 @@ const sgn = (v, unit) => (v < 0 ? "−" : "+") + fv(Math.abs(v), unit);
 function buildReport(o, ym, date, entries, cuti, today) {
   const m = outletMetrics(o, ym, date, entries, cuti), s = m.month.sales;
   const e = entries.find(x => x.outlet === o.code && x.date === date) || {}, dv = valsOf(e);
-  const tag = x => (x < 0 ? "DEFICIT -RM " : "SURPLUS +RM ") + fmt(Math.abs(x));
+  const tag = (x, unit) => (x < 0 ? "DEFICIT -" : "SURPLUS +") + (unit ? fmt(Math.abs(x)) + " unit" : "RM " + fmt(Math.abs(x)));
   const d = diffOf(s), st = tag(d);
-  const wk = weekOf(Number(date.slice(8, 10))), W = m.weeks[wk];
   const L = ["*TRACKING SALE PERFORMANCE*"];
   if (date !== today) L.push("Tarikh : " + prettyDate(date));
   L.push("", `*${o.code.toUpperCase()} ${Math.round(s.target / 1000)}k*`,
     `Daily Target ${m.total} Days ${rm(m.daily.sales)} (${m.idxThru} Day)`, "",
     `TS Supposed : ${rm(s.supposed)}`, `TS Today : ${rm(s.actual)}`, `Status : ${st}`, "", "*DAILY REPORT*");
   if (o.hasRepair) L.push(`Repair : ${rm(dv.repair)}`);
-  L.push(`Phone : ${rm(dv.phone)}`, `Aksesori : ${rm(dv.aksesori)}`, `CCTI Received : ${fmt(dv.ccti)} unit`, "",
-    `*WEEKLY REPORT (W${wk} · ${W.range[0]}-${W.range[1]} ${MS[Number(ym.slice(5)) - 1]})*`,
-    `Target Minggu : ${rm(W.sales.target)}`, `Actual : ${rm(W.sales.actual)}`, `Status : ${tag(W.sales.actual - W.sales.target)}`, "", "*MONTHLY REPORT*");
-  if (o.hasRepair) L.push(`Repair : ${rm(m.month.repair.actual)}`);
-  L.push(`Phone : ${rm(m.month.phone.actual)}`, `Aksesori : ${rm(m.month.aksesori.actual)}`,
-    `CCTI Received : ${fmt(m.month.ccti.actual)} / ${fmt(m.month.ccti.target)} unit`,
-    `Target Bulan : ${rm(s.target)}`, `Status Target Bulan : ${tag(s.actual - s.target)}`);
+  L.push(`Phone : ${rm(dv.phone)}`, `Aksesori : ${rm(dv.aksesori)}`, `CCTI Received : ${fmt(dv.ccti)} unit`, "", "*MONTHLY REPORT*");
+  const ml = (name, c, unit) => `${name} : ${unit ? fmt(c.actual) + " / " + fmt(c.target) + " unit" : rm(c.actual)} (${tag(diffOf(c), unit)})`;
+  if (o.hasRepair) L.push(ml("Repair", m.month.repair));
+  L.push(ml("Phone", m.month.phone), ml("Aksesori", m.month.aksesori), ml("CCTI Received", m.month.ccti, true));
   return L.join("\n");
 }
 
