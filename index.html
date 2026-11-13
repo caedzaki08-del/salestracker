@@ -195,6 +195,7 @@
   .c-repair .ic{background:var(--c-repair-bg); color:var(--c-repair);}
   .c-akse .ic{background:var(--c-others-bg); color:var(--c-others);}
   .c-cc .ic{background:var(--c-cc-bg); color:var(--c-cc);}
+  .tmpnote{margin-top:12px; padding:9px 12px; border-radius:12px; background:var(--warn-bg); color:var(--warn); font-size:12.5px; line-height:1.45;} .tmpnote b{font-weight:800;}
   .dline{display:flex; gap:10px; align-items:center; margin-top:12px; padding:10px 12px; border-radius:12px; background:var(--brand-soft); color:var(--text-2); font-size:13px; flex-wrap:wrap; justify-content:space-between;}
   .dline b{color:var(--text); font-weight:800;}
   .datef{display:block; box-sizing:border-box; width:100%; max-width:100%; min-width:0; min-height:48px; padding:12px 14px; border-radius:12px; border:1px solid var(--line); background:var(--surface-2); color:var(--text); font:600 16px Inter,system-ui,sans-serif; -webkit-appearance:none; appearance:none; text-align:left;}
@@ -817,6 +818,7 @@ function renderToday(v) {
      <label class="lbl" for="inpDate" style="margin-top:8px">Tarikh</label>
      <input class="datef" id="inpDate" type="date" value="${d.date}" max="${S.today}" ${minDate ? `min="${minDate}"` : ""}>
      <div id="editBar"></div>
+     <div class="tmpnote"><b>Rekod sementara.</b> RM dan unit yang kau isi ialah untuk lihat pencapaian harian sahaja. HQ akan kemas kini dengan angka sheet jualan keesokan harinya. CC dan TI diterima disimpan terus ke sheet outlet.</div>
      <div class="fgrid">
        ${f("inpPhone", "c-phone", "Phone", ICON.phone, "RM", d.phone)}
        ${f("inpUP", "c-phone", "Unit Phone", ICON.phone, "unit", d.up)}
