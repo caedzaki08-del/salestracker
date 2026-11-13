@@ -730,7 +730,7 @@ function nextHTML(c, mu, rem) {
   if (mu.tUP > 0) { const avgP = mu.tP / mu.tUP; bl.push(nxBlock("Phone", mu.rP, avgP * mu.sP, mu.uP, mu.sP, avgP, mu.tP - mu.rP, mu.tUP - mu.uP, rem)); }
   if (mu.tUR > 0) bl.push(nxBlock("Repair", mu.rR, APU_REPAIR * mu.sR, mu.uR, mu.sR, APU_REPAIR, mu.tR - mu.rR, mu.tUR - mu.uR, rem));
   if (!bl.length) return "";
-  return `<details class="card nx" data-k="n"${NX_OPEN ? " open" : ""}><summary><div class="nxt"><span class="nxh">Seterusnya untuk PIC</span><s class="ch">▾</s></div>${bl.map(x => x.sum).join("")}</summary><div class="nxs">Banding dengan plan setakat hari ini · Rendah = bawah, Capai = tepat, Tinggi = lebih</div>${bl.map(x => x.html).join("")}<div class="nxs">Semak: kategori mana kurang? Berapa baki RM dan unit? Siapa buat tindakan dan bila?</div></details>`;
+  return `<details class="card nx" data-k="n"${NX_OPEN ? " open" : ""}><summary><div class="nxt"><span class="nxh">TINDAKAN PIC</span><s class="ch">▾</s></div>${bl.map(x => x.sum).join("")}</summary><div class="nxs">Banding dengan plan setakat hari ini · Rendah = bawah, Capai = tepat, Tinggi = lebih</div>${bl.map(x => x.html).join("")}<div class="nxs">Semak: kategori mana kurang? Berapa baki RM dan unit? Siapa buat tindakan dan bila?</div></details>`;
 }
 function heroHTML(eyebrow, c, extra, mu, full) {
   const d = diffOf(c), st = d >= 0 ? "s-ok" : (-d <= 0.1 * c.supposed ? "s-warn" : "s-bad");
