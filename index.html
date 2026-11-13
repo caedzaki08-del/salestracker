@@ -97,6 +97,9 @@
   .hero .h3>div{min-width:0;}
   .hero .h3 span{display:block; font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:rgba(255,255,255,.78);}
   .hero .h3 b{display:block; font-size:21px; font-weight:800; letter-spacing:-.03em; line-height:1.1; margin-top:3px; white-space:nowrap;}
+  .hero .h3 small{display:block; font-size:10.5px; color:rgba(255,255,255,.72); margin-top:2px; white-space:nowrap;}
+  .hero .h3 i{display:inline-block; font-style:normal; font-size:11px; font-weight:800; margin-top:3px; padding:1px 7px; border-radius:99px; background:rgba(255,255,255,.18);}
+  .hero .h3 i.ok{color:#86EFAC;} .hero .h3 i.wn{color:#FDE68A;} .hero .h3 i.bd{color:#FCA5A5;}
   .hero .hbar{position:relative; height:8px; border-radius:99px; background:rgba(255,255,255,.2); margin-top:14px;}
   .hero .hbar>i{display:block; height:100%; border-radius:99px; background:#fff; max-width:100%;}
   .hero .hbar .pace{position:absolute; top:-4px; bottom:-4px; width:2px; margin-left:-1px; background:#FBBF24; border-radius:2px;}
@@ -372,12 +375,12 @@ function outletMetrics(o, ym, thru, entries, cuti) {
     weeks[w].range = [wd[0].d, wd[wd.length - 1].d]; weeks[w].opAll = opAll; weeks[w].started = wd[0].date <= thru;
   }
   const withU = mine.filter(e => e.up !== undefined && e.up !== null);
-  const mu = { unit: withU.reduce((a, e) => a + (e.up || 0) + (e.ur || 0), 0), rm: withU.reduce((a, e) => a + (e.phone || 0) + (e.repair || 0), 0) };
+  const unitT = (o.tUPhone || 0) + (o.hasRepair ? (o.tURepair || 0) : 0), mu = { unit: withU.reduce((a, e) => a + (e.up || 0) + (e.ur || 0), 0), rm: withU.reduce((a, e) => a + (e.phone || 0) + (e.repair || 0), 0), unitT, unitS: cal.total ? unitT * idxThru / cal.total : 0, rmT: T.phone + T.repair };
   return { cal, total: cal.total, idxThru, daily, month, weeks, T, mu };
 }
 function aggregate(per) {
   const add = (get) => { const r = {}; CATS.forEach(c => { r[c.k] = { actual: 0, target: 0, supposed: 0 }; per.forEach(p => { const x = get(p.m)[c.k]; r[c.k].actual += x.actual; r[c.k].target += x.target; r[c.k].supposed += x.supposed; }); }); return r; };
-  const out = { month: add(m => m.month), weeks: {}, mu: per.reduce((a, p) => ({ unit: a.unit + p.m.mu.unit, rm: a.rm + p.m.mu.rm }), { unit: 0, rm: 0 }) };
+  const out = { month: add(m => m.month), weeks: {}, mu: per.reduce((a, p) => ({ unit: a.unit + p.m.mu.unit, rm: a.rm + p.m.mu.rm, unitT: a.unitT + p.m.mu.unitT, unitS: a.unitS + p.m.mu.unitS, rmT: a.rmT + p.m.mu.rmT }), { unit: 0, rm: 0, unitT: 0, unitS: 0, rmT: 0 }) };
   for (let w = 1; w <= 4; w++) { out.weeks[w] = add(m => m.weeks[w]); out.weeks[w].range = per[0].m.weeks[w].range; out.weeks[w].started = per[0].m.weeks[w].started; }
   return out;
 }
@@ -588,10 +591,16 @@ async function render() {
   $("foot").innerHTML = DEMO ? "" : "Data jualan disimpan dalam sheet tracker. CC/TI received disalin ke sheet outlet.";
 }
 
+function h3HTML(c, mu) {
+  const apuA = mu.unit > 0 ? mu.rm / mu.unit : 0, apuP = mu.unitT > 0 ? mu.rmT / mu.unitT : 0;
+  const pc = (a, p) => { if (!(p > 0)) return ""; const r = Math.round(a / p * 100); return `<i class="${r >= 100 ? "ok" : r >= 80 ? "wn" : "bd"}">${r}%</i>`; };
+  const col = (lab, big, plan, pct) => `<div><span>${lab}</span><b>${big}</b><small>Plan ${plan}</small>${pct}</div>`;
+  return `<div class="h3">${col("RM MTD", rm(c.actual), rm(c.supposed), pc(c.actual, c.supposed))}${col("Unit MTD", fmt(mu.unit), mu.unitT > 0 ? f1(mu.unitS) : "-", pc(mu.unit, mu.unitS))}${col("APU MTD", mu.unit > 0 ? rm(Math.round(apuA)) : "-", apuP > 0 ? rm(Math.round(apuP)) : "-", mu.unit > 0 ? pc(apuA, apuP) : "")}</div>`;
+}
 function heroHTML(eyebrow, c, extra, mu) {
   const d = diffOf(c), st = d >= 0 ? "s-ok" : (-d <= 0.1 * c.supposed ? "s-warn" : "s-bad");
   const pct = c.target ? Math.min(100, c.actual / c.target * 100) : 0, pace = c.target ? Math.min(100, c.supposed / c.target * 100) : 0;
-  return `<div class="hero"><div class="eyebrow">${eyebrow}</div>${mu ? `<div class="h3"><div><span>RM MTD</span><b>${rm(c.actual)}</b></div><div><span>Unit MTD</span><b>${fmt(mu.unit)}</b></div><div><span>APU MTD</span><b>${mu.unit > 0 ? rm(Math.round(mu.rm / mu.unit)) : "-"}</b></div></div>` : `<div class="big">${rm(c.actual)}</div>`}
+  return `<div class="hero"><div class="eyebrow">${eyebrow}</div>${mu ? h3HTML(c, mu) : `<div class="big">${rm(c.actual)}</div>`}
     <div class="sub2">${extra}</div>
     <div class="hbar"><i style="width:${pct}%"></i><span class="pace" style="left:${pace}%"></span></div>
     <div class="legend"><span>${pct.toFixed(0)}% daripada sasaran ${rm(c.target)}</span><span>▎ sepatutnya ${rm(c.supposed)}</span></div>
