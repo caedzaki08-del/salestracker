@@ -608,18 +608,19 @@ async function render() {
 let UNIT_OPEN = false;
 document.addEventListener("toggle", e => { if (e.target.classList && e.target.classList.contains("ud")) UNIT_OPEN = e.target.open; }, true);
 const APU_REPAIR = 160;   // sasaran APU Repair ditetapkan HQ
-function h3HTML(c, mu) {
+function h3HTML(c, mu, full) {
+  if (full) mu = Object.assign({}, mu, { unitS: mu.unitT, sP: mu.tUP, sR: mu.tUR });
   const pc = (a, p) => { if (!(p > 0)) return ""; const r = Math.round(a / p * 100); return `<i class="${r >= 100 ? "ok" : r >= 80 ? "wn" : "bd"}">${r}%</i>`; };
   const col = (lab, big, plan, pct) => `<div><span>${lab}</span><b>${big}</b><small>Plan ${plan}</small>${pct}</div>`;
   const sub = (n, a, p, t) => t > 0 ? `<div class="ur"><b>${n}</b><span>${fmt(a)} / Plan ${f1(p)}</span>${pc(a, p)}</div>` : "";
   const unitCell = (mu, pc) => `<details class="ud"${UNIT_OPEN ? " open" : ""}><summary><span>Unit Terkini <em>Phone+Repair</em></span><b>${fmt(mu.unit)}<u>▾</u></b><small>Plan ${mu.unitT > 0 ? f1(mu.unitS) : "-"}</small>${pc(mu.unit, mu.unitS)}</summary><div class="usub">${sub("Unit Phone", mu.uP, mu.sP, mu.tUP)}${sub("Unit Repair", mu.uR, mu.sR, mu.tUR)}</div></details>`;
   const apu = (lab, r, u, tr, tu, fix) => { const a = u > 0 ? r / u : 0, p = fix || (tu > 0 ? tr / tu : 0); return col(lab, u > 0 ? rm(Math.round(a)) : "-", p > 0 ? rm(Math.round(p)) : "-", u > 0 ? pc(a, p) : ""); };
-  return `<div class="h3">${col("RM Terkini", rm(c.actual), rm(c.supposed), pc(c.actual, c.supposed))}${unitCell(mu, pc)}${apu("APU Phone Terkini", mu.rP, mu.uP, mu.tP, mu.tUP)}${apu("APU Repair Terkini", mu.rR, mu.uR, mu.tR, mu.tUR, mu.tUR > 0 ? APU_REPAIR : 0)}</div>`;
+  return `<div class="h3">${col("RM Terkini", rm(c.actual), rm(full ? c.target : c.supposed), pc(c.actual, full ? c.target : c.supposed))}${unitCell(mu, pc)}${apu("APU Phone Terkini", mu.rP, mu.uP, mu.tP, mu.tUP)}${apu("APU Repair Terkini", mu.rR, mu.uR, mu.tR, mu.tUR, mu.tUR > 0 ? APU_REPAIR : 0)}</div>`;
 }
-function heroHTML(eyebrow, c, extra, mu) {
+function heroHTML(eyebrow, c, extra, mu, full) {
   const d = diffOf(c), st = d >= 0 ? "s-ok" : (-d <= 0.1 * c.supposed ? "s-warn" : "s-bad");
   const pct = c.target ? Math.min(100, c.actual / c.target * 100) : 0, pace = c.target ? Math.min(100, c.supposed / c.target * 100) : 0;
-  return `<div class="hero"><div class="eyebrow">${eyebrow}</div>${mu ? h3HTML(c, mu) : `<div class="big">${rm(c.actual)}</div>`}
+  return `<div class="hero"><div class="eyebrow">${eyebrow}</div>${mu ? h3HTML(c, mu, full) : `<div class="big">${rm(c.actual)}</div>`}
     <div class="sub2">${extra}</div>
     <div class="hbar"><i style="width:${pct}%"></i><span class="pace" style="left:${pace}%"></span></div>
     <div class="legend"><span>${pct.toFixed(0)}% daripada sasaran ${rm(c.target)}</span><span>▎ sepatutnya ${rm(c.supposed)}</span></div>
@@ -802,7 +803,7 @@ function renderMonth(v) {
   if (!per.length) { v.innerHTML = monthChips() + '<div class="card"><div class="mload">Tiada outlet.</div></div>'; bindMonthChips(v); return; }
   const single = per.length === 1, s = agg.month.sales;
   const eyebrow = single ? `Hari ke-${per[0].m.idxThru} / ${per[0].m.total} · ${MONTHS[Number(ym.slice(5)) - 1]}` : `Semua outlet · ${MONTHS[Number(ym.slice(5)) - 1]}`;
-  let html = monthChips() + heroHTML(eyebrow, s, single ? `${per[0].o.name} · harian ${rm(per[0].m.daily.sales)}` : `${per.length} outlet aktif`, agg.mu);
+  let html = monthChips() + heroHTML(eyebrow, s, single ? `${per[0].o.name} · harian ${rm(per[0].m.daily.sales)}` : `${per.length} outlet aktif`, agg.mu, true);
   html += `<div class="card"><div class="sgrp">Ikut kategori</div>${CATS.filter(x => x.k !== "sales").map(x => rowHTML(x.name, x.unit, agg.month[x.k])).join("")}</div>`;
   if (!single) html += `<div class="card"><div class="sgrp">Ikut outlet</div>${per.map(p => `<div class="ocard" style="cursor:default"><div class="n">${esc(p.o.name)}<small>Sasaran ${rm(p.m.month.sales.target)} · hari ${p.m.idxThru}/${p.m.total}</small></div><div class="r"><b>${rm(p.m.month.sales.actual)}</b><span class="pill st-${statusOf(p.m.month.sales)}">${sgn(diffOf(p.m.month.sales), "RM")}</span></div></div>`).join("")}</div>`;
   // jadual harian
