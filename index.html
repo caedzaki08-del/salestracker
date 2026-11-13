@@ -115,6 +115,16 @@
   .fgrid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;}
   .fld{background:var(--surface-2); border:1px solid var(--line); border-radius:14px; padding:10px 12px;}
   .fld.wide{grid-column:1/-1;}
+  .fb{margin:12px 0 4px; display:grid; gap:10px;}
+  .fb .fh{font-size:13px; font-weight:700; line-height:1.45;}
+  .fb .fc{border:1px solid var(--line); border-radius:14px; padding:11px 12px; background:var(--surface-2);}
+  .fb .fc .t{display:flex; justify-content:space-between; align-items:center; font-weight:800; font-size:14px;}
+  .fb .fm{display:grid; grid-template-columns:44px 1fr auto; gap:2px 8px; font-size:12.5px; margin-top:8px; align-items:center;}
+  .fb .fm span.k{color:var(--muted); font-weight:700;}
+  .fb .fm b{font-weight:800;} .fb .fm em{font-style:normal; color:var(--muted);}
+  .fb .dotc{width:9px; height:9px; border-radius:50%; display:inline-block;}
+  .fb .dotc.good{background:var(--good);} .fb .dotc.warn{background:var(--warn);} .fb .dotc.bad{background:var(--bad);} .fb .dotc.na{background:var(--line);}
+  .fb .tip{margin-top:8px; font-size:12.5px; line-height:1.45; color:var(--text-2);}
   .fld:focus-within{outline:2px solid var(--brand); outline-offset:-1px; background:var(--surface);}
   .fld label{display:flex; align-items:center; gap:8px; font-size:12px; font-weight:600; color:var(--text-2);}
   .fld .ic{width:24px; height:24px; border-radius:8px; display:grid; place-items:center; flex:none;}
@@ -254,6 +264,7 @@
 
 <div class="modal-overlay" id="repModal"><div class="modal">
   <h3 id="repTitle">Hantar laporan</h3>
+  <div class="fb" id="fbBox"></div>
   <div class="hint">Tekan butang bawah untuk copy laporan dan buka WhatsApp, kemudian pilih group dan hantar.</div>
   <div class="rtxt" id="repTxt"></div>
   <div class="modal-actions"><button class="btn ghost" id="repClose" type="button">Tutup</button><button class="btn" id="repCopy" type="button">Copy</button></div>
@@ -397,7 +408,7 @@ function buildReport(o, ym, date, entries, cuti, today) {
 const DEMO_TODAY = "2026-10-26";
 const DEMO_DB = (() => {
   const outlets = [
-    { code: "aor", name: "Alor Setar", active: true, hasRepair: true, opensWed: false, tPhone: 155000, tRepair: 22000, tAkse: 3000, tCcti: 30 },
+    { code: "aor", name: "Alor Setar", active: true, hasRepair: true, opensWed: false, tPhone: 155000, tRepair: 22000, tAkse: 3000, tCcti: 30, tUPhone: 88, tURepair: 115 },
     { code: "sgp", name: "Sungai Petani", active: true, hasRepair: true, opensWed: false, tPhone: 155000, tRepair: 22000, tAkse: 3000, tCcti: 30 },
     { code: "pdg", name: "Pendang", active: true, hasRepair: false, opensWed: false, tPhone: 99000, tRepair: 0, tAkse: 1000, tCcti: 10 },
     { code: "kll", name: "Kelang Lama", active: true, hasRepair: true, opensWed: true, tPhone: 155000, tRepair: 22000, tAkse: 3000, tCcti: 30 },
@@ -681,11 +692,42 @@ async function flushQueue() {
   if (sent) toast(`${sent} laporan tertangguh dah dihantar`);
 }
 
+/* ----- feedback harian (RM, Unit, APU lawan sasaran harian) ----- */
+const f1 = n => (Math.round(n * 10) / 10).toLocaleString("en-US");
+function feedbackHTML(o, ym, date, entries, cuti) {
+  const m = outletMetrics(o, ym, date, entries, cuti), e = entries.find(x => x.outlet === o.code && x.date === date) || {}, dv = valsOf(e);
+  const days = m.total || 1, st = (a, t) => (!t ? "na" : a >= t ? "good" : a >= 0.8 * t ? "warn" : "bad"), pc = (a, t) => (t ? Math.round(a / t * 100) + "%" : "");
+  const cats = [{ k: "phone", name: "Phone", u: "up", tu: o.tUPhone, rmT: o.tPhone }];
+  if (o.hasRepair) cats.push({ k: "repair", name: "Repair", u: "ur", tu: o.tURepair, rmT: o.tRepair });
+  const rows = [];
+  let hit = 0, tot = 0;
+  cats.forEach(c => {
+    const rmA = dv[c.k], rmD = m.daily[c.k], unA = dv[c.u], unD = c.tu ? c.tu / days : 0, apuT = c.tu ? c.rmT / c.tu : 0, apuA = unA > 0 ? rmA / unA : 0;
+    const sR = st(rmA, rmD), sU = unD ? st(unA || 0, unD) : "na", sA = apuT && unA > 0 ? st(apuA, apuT) : "na";
+    tot++; if (sR === "good") hit++;
+    let tip;
+    if (sR === "good") tip = "Capai sasaran RM harian. Teruskan.";
+    else if (!(unA > 0)) tip = unD ? `Tiada unit hari ini. Sasaran sekitar ${f1(unD)} unit sehari.` : "Belum ada jualan hari ini.";
+    else if (sU === "good" && sA !== "good" && sA !== "na") tip = `Unit cukup tapi APU rendah (${rm(apuA)} berbanding ${rm(apuT)}). Dorong model harga lebih tinggi.`;
+    else if (sU !== "good" && sU !== "na" && (sA === "good" || sA === "na")) tip = `APU baik, unit kurang. Perlu lagi ${Math.max(1, Math.ceil(unD - unA))} unit untuk capai sasaran harian.`;
+    else tip = `Unit dan APU kedua-duanya di bawah sasaran. Kejar bilangan jualan dan naikkan harga purata.`;
+    rows.push(`<div class="fc"><div class="t"><span>${c.name}</span><span class="dotc ${sR}"></span></div><div class="fm">
+      <span class="k">RM</span><b>${rm(rmA)}</b><em>sasaran ${rm(rmD)} · ${pc(rmA, rmD)}</em>
+      <span class="k">Unit</span><b>${unA === undefined ? "-" : fmt(unA)}</b><em>${unD ? `sasaran ${f1(unD)} · ${pc(unA || 0, unD)}` : "tiada sasaran"}</em>
+      <span class="k">APU</span><b>${unA > 0 ? rm(apuA) : "-"}</b><em>${apuT ? `sasaran ${rm(apuT)}` : "tiada sasaran"}</em></div><div class="tip">${tip}</div></div>`);
+  });
+  const aA = dv.aksesori, aD = m.daily.aksesori, sA2 = st(aA, aD); tot++; if (sA2 === "good") hit++;
+  rows.push(`<div class="fc"><div class="t"><span>Aksesori</span><span class="dotc ${sA2}"></span></div><div class="fm"><span class="k">RM</span><b>${rm(aA)}</b><em>sasaran ${rm(aD)} · ${pc(aA, aD)}</em></div></div>`);
+  const head = hit === tot ? "Semua kategori capai sasaran harian. Mantap!" : hit === 0 ? "Hari ni belum capai sasaran harian. Esok kita kejar semula." : `${hit} daripada ${tot} kategori capai sasaran RM harian.`;
+  return `<div class="fh">${head}</div>` + rows.join("");
+}
+
 /* ----- laporan modal ----- */
 let REP = "";
 function showReport(o, saved) {
   const d = S.draft, ym = d.date.slice(0, 7);
   REP = buildReport(o, ym, d.date, entriesWithDraft(ym, o), S.cache[ym].cuti, S.today);
+  $("fbBox").innerHTML = feedbackHTML(o, ym, d.date, entriesWithDraft(ym, o), S.cache[ym].cuti);
   $("repTitle").textContent = saved ? "Laporan disimpan. Hantar ke group" : "Pratonton laporan";
   $("repTxt").textContent = REP; $("repModal").classList.add("show");
 }
