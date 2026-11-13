@@ -109,6 +109,16 @@
   .hero .ur span{font-size:11px; letter-spacing:0; text-transform:none; color:#fff; font-weight:600;}
   .hero .ur i{margin:0;}
   .hero .unote{font-size:10px; color:rgba(255,255,255,.7);}
+  .hero .ud2{background:rgba(255,255,255,.14); border-radius:10px;}
+  .hero .ud2>summary{list-style:none; cursor:pointer; background:none; -webkit-tap-highlight-color:transparent;}
+  .hero .ud2>summary::-webkit-details-marker{display:none;}
+  .hero .ud2 .ch{text-decoration:none; font-size:11px; opacity:.8; display:inline-block; transition:transform .15s;}
+  .hero .ud2[open] .ch{transform:rotate(180deg);}
+  .hero .ucs{padding:0 8px 8px; display:grid; gap:3px;}
+  .hero .uc{display:flex; align-items:baseline; gap:6px; font-size:11px;}
+  .hero .uc span{flex:1; letter-spacing:0; text-transform:none; color:rgba(255,255,255,.85);}
+  .hero .uc b{font-size:12px; margin:0; width:auto; display:inline;}
+  .hero .uc em{font-style:normal; font-size:10px; opacity:.7; margin:0; min-width:30px; text-align:right;}
   .hero .ud[data-k=a][open]{grid-column:1/-1;}
   .hero .ud[data-k=a] .usub{grid-template-columns:1fr 1fr;}
   .hero .ud[data-k=a] .unote{grid-column:1/-1;}
@@ -609,8 +619,8 @@ async function render() {
   $("foot").innerHTML = DEMO ? "" : "Data jualan disimpan dalam sheet tracker. CC/TI received disalin ke sheet outlet.";
 }
 
-let UNIT_OPEN = false, APU_OPEN = false, CAT_NOW = null;
-document.addEventListener("toggle", e => { const t = e.target; if (t.classList && t.classList.contains("ud")) { if (t.dataset.k === "a") APU_OPEN = t.open; else UNIT_OPEN = t.open; } }, true);
+let UNIT_OPEN = false, APU_OPEN = false, UPH_OPEN = false, CAT_NOW = null;
+document.addEventListener("toggle", e => { const t = e.target, k = t.dataset && t.dataset.k; if (k === "a") APU_OPEN = t.open; else if (k === "u") UNIT_OPEN = t.open; else if (k === "p") UPH_OPEN = t.open; }, true);
 const APU_CAT = [{ u: "au", r: "ar", name: "Apple Used", t: 2032 }, { u: "pn", r: "pr", name: "Apple New", t: 4457 }, { u: "dn", r: "dr", name: "Android New", t: 1368 }, { u: "cu", r: "cr", name: "CCTI Sold", t: 1301 }];
 /** Pecahan kategori Phone dari sheet outlet (baca sahaja), jumlah untuk outlet terpilih sehingga tarikh thru. */
 function setCats(ym, codes, thru) {
@@ -626,7 +636,14 @@ function h3HTML(c, mu, full) {
   const pc = (a, p) => { if (!(p > 0)) return ""; const r = Math.round(a / p * 100); return `<i class="${r >= 100 ? "ok" : r >= 80 ? "wn" : "bd"}">${r}%</i>`; };
   const col = (lab, big, plan, pct) => `<div><span>${lab}</span><b>${big}</b><small>Plan ${plan}</small>${pct}</div>`;
   const sub = (n, a, p, t) => t > 0 ? `<div class="ur"><b>${n}</b><span>${fmt(a)} / Plan ${f1(p)}</span>${pc(a, p)}</div>` : "";
-  const unitCell = (mu, pc) => `<details class="ud" data-k="u"${UNIT_OPEN ? " open" : ""}><summary><span>Unit Terkini <em>Phone+Repair</em></span><b>${fmt(mu.unit)}<u>▾</u></b><small>Plan ${mu.unitT > 0 ? f1(mu.unitS) : "-"}</small>${pc(mu.unit, mu.unitS)}</summary><div class="usub">${sub("Unit Phone", mu.uP, mu.sP, mu.tUP)}${sub("Unit Repair", mu.uR, mu.sR, mu.tUR)}</div></details>`;
+  const phoneSub = (a, p, t) => {
+    if (!(t > 0)) return "";
+    if (!CAT_NOW) return sub("Unit Phone", a, p, t);
+    const tot = APU_CAT.reduce((x, k) => x + CAT_NOW[k.u], 0);
+    const rows = APU_CAT.map(k => `<div class="uc"><span>${k.name}</span><b>${fmt(CAT_NOW[k.u])}</b><em>${tot > 0 ? Math.round(CAT_NOW[k.u] / tot * 100) : 0}%</em></div>`).join("");
+    return `<details class="ud2" data-k="p"${UPH_OPEN ? " open" : ""}><summary class="ur"><b>Unit Phone <s class="ch">\u25be</s></b><span>${fmt(a)} / Plan ${f1(p)}</span>${pc(a, p)}</summary><div class="ucs">${rows}<div class="unote">Ikut sheet outlet sehingga ${shortDate(CAT_NOW.last)}</div></div></details>`;
+  };
+  const unitCell = (mu, pc) => `<details class="ud" data-k="u"${UNIT_OPEN ? " open" : ""}><summary><span>Unit Terkini <em>Phone+Repair</em></span><b>${fmt(mu.unit)}<u>▾</u></b><small>Plan ${mu.unitT > 0 ? f1(mu.unitS) : "-"}</small>${pc(mu.unit, mu.unitS)}</summary><div class="usub">${phoneSub(mu.uP, mu.sP, mu.tUP)}${sub("Unit Repair", mu.uR, mu.sR, mu.tUR)}</div></details>`;
   const apu = (lab, r, u, tr, tu, fix) => { const a = u > 0 ? r / u : 0, p = fix || (tu > 0 ? tr / tu : 0); return col(lab, u > 0 ? rm(Math.round(a)) : "-", p > 0 ? rm(Math.round(p)) : "-", u > 0 ? pc(a, p) : ""); };
   const apuPhone = (lab, r, u, tr, tu) => {
     if (!CAT_NOW) return apu(lab, r, u, tr, tu);
