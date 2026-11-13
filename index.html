@@ -145,7 +145,7 @@
   .hero .uc span{flex:1; letter-spacing:0; text-transform:none; color:rgba(255,255,255,.85);}
   .hero .uc b{font-size:12px; margin:0; width:auto; display:inline;}
   .hero .uc em{font-style:normal; font-size:10.5px; opacity:.85; margin:0; min-width:62px; text-align:right;}
-  .hero .ud[data-k=a][open]{grid-column:1/-1;}
+  .hero .ud[data-k=a][open], .hero .ud[data-k=r][open], .hero .cct{grid-column:1/-1;}
   .hero .ud[data-k=a] .usub{grid-template-columns:1fr 1fr;}
   .hero .ud[data-k=a] .unote{grid-column:1/-1;}
   .hero .h3 small{display:block; font-size:10.5px; color:rgba(255,255,255,.72); margin-top:2px; white-space:nowrap;}
@@ -646,8 +646,8 @@ async function render() {
   $("foot").innerHTML = DEMO ? "" : "Data jualan disimpan dalam sheet tracker. CC/TI received disalin ke sheet outlet.";
 }
 
-let UNIT_OPEN = false, APU_OPEN = false, UPH_OPEN = false, NX_OPEN = false, CAT_NOW = null;
-document.addEventListener("toggle", e => { const t = e.target, k = t.dataset && t.dataset.k; if (k === "a") APU_OPEN = t.open; else if (k === "u") UNIT_OPEN = t.open; else if (k === "p") UPH_OPEN = t.open; else if (k === "n") NX_OPEN = t.open; }, true);
+let UNIT_OPEN = false, APU_OPEN = false, UPH_OPEN = false, NX_OPEN = false, RM_OPEN = false, CAT_NOW = null;
+document.addEventListener("toggle", e => { const t = e.target, k = t.dataset && t.dataset.k; if (k === "a") APU_OPEN = t.open; else if (k === "u") UNIT_OPEN = t.open; else if (k === "p") UPH_OPEN = t.open; else if (k === "n") NX_OPEN = t.open; else if (k === "r") RM_OPEN = t.open; }, true);
 // t = APU target baru; q = sasaran unit sebulan (satu outlet Kliki, jumlah 102). Outlet lain diskala ikut sasaran unit Phone outlet itu.
 /** Beza daripada plan: "Kurang x" / "Lebih x" (tiada peratus). */
 /** Kelas warna nombor actual: hijau (up) kalau capai plan, merah (dn) kalau kurang. */
@@ -663,10 +663,16 @@ function setCats(ym, codes, thru) {
   CAT_NOW = t;
 }
 const APU_REPAIR = 160;   // sasaran APU Repair ditetapkan HQ
-function h3HTML(c, mu, full) {
+function h3HTML(c, mu, full, cats) {
   if (full) mu = Object.assign({}, mu, { unitS: mu.unitT, sP: mu.tUP, sR: mu.tUR });
   const pc = (a, p, m) => { if (!(p > 0)) return ""; const r = a / p; return `<i class="${r >= 1 ? "ok" : r >= 0.8 ? "wn" : "bd"}">${gapTxt(a, p, m)}</i>`; };
   const col = (lab, big, plan, pct, cls) => `<div><span>${lab}</span><b class="${cls || ""}">${big}</b><small>Plan ${plan}</small>${pct}</div>`;
+  const rmCell = () => {
+    const pl = full ? c.target : c.supposed, rows = cats ? [["Phone", cats.phone], ["Repair", cats.repair], ["Aksesori", cats.aksesori]].filter(([, x]) => x && (x.target > 0 || x.actual > 0)).map(([n, x]) => { const p = full ? x.target : x.supposed; return `<div class="ur"><b>${n}</b><span><strong class="${cmpCls(x.actual, p)}">${rm(x.actual)}</strong> / Plan ${rm(p)}</span>${pc(x.actual, p, true)}</div>`; }).join("") : "";
+    if (!rows) return col("RM Terkini", rm(c.actual), rm(pl), pc(c.actual, pl, true), cmpCls(c.actual, pl));
+    return `<details class="ud" data-k="r"${RM_OPEN ? " open" : ""}><summary><span>RM Terkini</span><b class="${cmpCls(c.actual, pl)}">${rm(c.actual)}<u>\u25be</u></b><small>Plan ${rm(pl)}</small>${pc(c.actual, pl, true)}</summary><div class="usub">${rows}</div></details>`;
+  };
+  const cct = () => { if (!cats || !cats.ccti || !(cats.ccti.target > 0)) return ""; const x = cats.ccti, p = full ? x.target : x.supposed; return `<div class="cct">${col("CCTI Received", fmt(x.actual) + " unit", f1(p) + " unit", pc(x.actual, p, false), cmpCls(x.actual, p))}</div>`; };
   const sub = (n, a, p, t) => t > 0 ? `<div class="ur"><b>${n}</b><span><strong class="${cmpCls(a, p)}">${fmt(a)}</strong> / Plan ${f1(p)}</span>${pc(a, p)}</div>` : "";
   const phoneSub = (a, p, t) => {
     if (!(t > 0)) return "";
@@ -682,7 +688,7 @@ function h3HTML(c, mu, full) {
     const rows = APU_CAT.map(k => { const n = CAT_NOW[k.u], v = CAT_NOW[k.r], ap = n > 0 ? v / n : 0; return `<div class="ur"><b>${k.name}</b><span>${fmt(n)} unit · APU <strong class="${n > 0 ? cmpCls(ap, k.t) : ""}">${n > 0 ? rm(Math.round(ap)) : "-"}</strong></span><span>Target ${rm(k.t)}</span>${n > 0 ? pc(ap, k.t, true) : ""}</div>`; }).join("");
     return `<details class="ud" data-k="a"${APU_OPEN ? " open" : ""}><summary><span>${lab}</span><b class="${u > 0 ? cmpCls(a, p) : ""}">${u > 0 ? rm(Math.round(a)) : "-"}<u>\u25be</u></b><small>Plan ${p > 0 ? rm(Math.round(p)) : "-"}</small>${u > 0 ? pc(a, p, true) : ""}</summary><div class="usub">${rows}<div class="unote">Ikut sheet outlet sehingga ${shortDate(CAT_NOW.last)}</div></div></details>`;
   };
-  return `<div class="h3">${col("RM Terkini", rm(c.actual), rm(full ? c.target : c.supposed), pc(c.actual, full ? c.target : c.supposed, true), cmpCls(c.actual, full ? c.target : c.supposed))}${unitCell(mu, pc)}${apuPhone("APU Phone Terkini", mu.rP, mu.uP, mu.tP, mu.tUP)}${apu("APU Repair Terkini", mu.rR, mu.uR, mu.tR, mu.tUR, mu.tUR > 0 ? APU_REPAIR : 0)}</div>`;
+  return `<div class="h3">${rmCell()}${unitCell(mu, pc)}${apuPhone("APU Phone Terkini", mu.rP, mu.uP, mu.tP, mu.tUP)}${apu("APU Repair Terkini", mu.rR, mu.uR, mu.tR, mu.tUR, mu.tUR > 0 ? APU_REPAIR : 0)}${cct()}</div>`;
 }
 /** Panduan PIC (ikut "Analisis Harian" HQ): banding Sales (RM), Unit dan Avg (APU) setiap kategori dengan sasaran setakat hari ini. */
 const NX = {
@@ -732,13 +738,11 @@ function nextHTML(c, mu, rem) {
   if (!bl.length) return "";
   return `<details class="card nx" data-k="n"${NX_OPEN ? " open" : ""}><summary><div class="nxt"><span class="nxh">TINDAKAN PIC</span><s class="ch">▾</s></div>${bl.map(x => x.sum).join("")}</summary><div class="nxs">Banding dengan plan setakat hari ini · Rendah = bawah, Capai = tepat, Tinggi = lebih</div>${bl.map(x => x.html).join("")}<div class="nxs">Semak: kategori mana kurang? Berapa baki RM dan unit? Siapa buat tindakan dan bila?</div></details>`;
 }
-function heroHTML(eyebrow, c, extra, mu, full) {
+function heroHTML(eyebrow, c, extra, mu, full, cats) {
   const d = diffOf(c), st = d >= 0 ? "s-ok" : (-d <= 0.1 * c.supposed ? "s-warn" : "s-bad");
   const pct = c.target ? Math.min(100, c.actual / c.target * 100) : 0, pace = c.target ? Math.min(100, c.supposed / c.target * 100) : 0;
-  return `<div class="hero"><div class="eyebrow">${eyebrow}</div>${mu ? h3HTML(c, mu, full) : `<div class="big">${rm(c.actual)}</div>`}
+  return `<div class="hero"><div class="eyebrow">${eyebrow}</div>${mu ? h3HTML(c, mu, full, cats) : `<div class="big">${rm(c.actual)}</div>`}
     <div class="sub2">${extra}</div>
-    <div class="hbar"><i style="width:${pct}%"></i><span class="pace" style="left:${pace}%"></span></div>
-    <div class="legend"><span>Sasaran ${rm(c.target)}</span><span>▎ sepatutnya ${rm(c.supposed)}</span></div>
     <div class="statusCard ${st}"><span class="dot"></span><span>${d >= 0 ? "Lebih" : "Kurang"} <b>${rm(Math.abs(d))}</b> ${d >= 0 ? "daripada" : "berbanding"} sepatutnya</span></div></div>`;
 }
 
@@ -808,7 +812,7 @@ function updateLive(o) {
   const dayTot = num(d.phone) + (o.hasRepair ? num(d.repair) : 0) + num(d.aksesori), ccti = Math.round(num(d.cc)) + Math.round(num(d.ti));
   setCats(ym, [o.code], d.date);
   $("heroBox").innerHTML = heroHTML(`Hari ke-${m.idxThru} / ${m.total} · ${MONTHS[Number(ym.slice(5)) - 1]}`, s,
-    `${o.name} · sasaran ${o.code.toUpperCase()} ${Math.round(s.target / 1000)}k · harian ${rm(m.daily.sales)}`, m.mu) + nextHTML(s, m.mu, m.total - m.idxThru);
+    `${o.name} · harian ${rm(m.daily.sales)}`, m.mu, false, m.month) + nextHTML(s, m.mu, m.total - m.idxThru);
   $("dline").innerHTML = `<span>Jumlah jualan hari ni <b>${rm(dayTot)}</b></span><span>CCTI received <b>${ccti} unit</b></span>`;
   $("savedChip").innerHTML = d.saved ? `<span class="chip ok">✓ Dihantar${d.saved.pic ? " · " + esc(d.saved.pic) : ""}</span>` : '<span class="chip no">Belum dihantar</span>';
   $("editBar").innerHTML = (isPast || d.saved) ? `<div class="editbar">${isPast ? `Edit tarikh <b>${prettyDate(d.date)}</b>. ` : ""}${d.saved ? "Nombor baru <b>ganti</b> yang lama, bukan tambah." : "Tarikh ini belum ada data."}</div>` : "";
@@ -899,7 +903,7 @@ function renderHqToday(v) {
       <div class="r"><b>${e ? rm(day.sales) : "–"}</b><span class="pill st-${st}">${d >= 0 ? "+" : "−"}${rm(Math.abs(d))}</span></div></div>`;
   }).join("");
   setCats(ym, per.map(p => p.o.code), date);
-  v.innerHTML = heroHTML(`Semua outlet · setakat ${shortDate(date)}`, agg.month.sales, `${sent} / ${per.length} outlet dah hantar laporan ${shortDate(date)}`, agg.mu) +
+  v.innerHTML = heroHTML(`Semua outlet · setakat ${shortDate(date)}`, agg.month.sales, `${sent} / ${per.length} outlet dah hantar laporan ${shortDate(date)}`, agg.mu, false, agg.month) +
     `<div class="card"><label class="lbl" for="hqDate">Tarikh</label><input class="datef" id="hqDate" type="date" value="${date}" max="${S.today}">
       <div style="margin-top:8px">${rows}</div><div class="mnote">Tekan outlet untuk buka borang / edit. Pill = surplus (+) atau deficit (−) berbanding sepatutnya.</div></div>`;
   $("hqDate").addEventListener("change", async e => { if (!e.target.value) return; S.hqDate = e.target.value; try { await loadMonth(S.hqDate.slice(0, 7)); } catch (er) { toast(er.message); return; } renderHqToday(v); });
@@ -921,7 +925,7 @@ function renderMonth(v) {
   const single = per.length === 1, s = agg.month.sales;
   const eyebrow = single ? `Hari ke-${per[0].m.idxThru} / ${per[0].m.total} · ${MONTHS[Number(ym.slice(5)) - 1]}` : `Semua outlet · ${MONTHS[Number(ym.slice(5)) - 1]}`;
   setCats(ym, per.map(p => p.o.code), thru);
-  let html = monthChips() + heroHTML(eyebrow, s, single ? `${per[0].o.name} · harian ${rm(per[0].m.daily.sales)}` : `${per.length} outlet aktif`, agg.mu, true) + (single && ym === curYM() ? nextHTML(s, agg.mu, per[0].m.total - per[0].m.idxThru) : "");
+  let html = monthChips() + heroHTML(eyebrow, s, single ? `${per[0].o.name} · harian ${rm(per[0].m.daily.sales)}` : `${per.length} outlet aktif`, agg.mu, true, agg.month) + (single && ym === curYM() ? nextHTML(s, agg.mu, per[0].m.total - per[0].m.idxThru) : "");
   html += `<div class="card"><div class="sgrp">Ikut kategori</div>${CATS.filter(x => x.k !== "sales").map(x => rowHTML(x.name, x.unit, agg.month[x.k])).join("")}</div>`;
   if (!single) html += `<div class="card"><div class="sgrp">Ikut outlet</div>${per.map(p => `<div class="ocard" style="cursor:default"><div class="n">${esc(p.o.name)}<small>Sasaran ${rm(p.m.month.sales.target)} · hari ${p.m.idxThru}/${p.m.total}</small></div><div class="r"><b>${rm(p.m.month.sales.actual)}</b><span class="pill st-${statusOf(p.m.month.sales)}">${sgn(diffOf(p.m.month.sales), "RM")}</span></div></div>`).join("")}</div>`;
   // jadual harian
