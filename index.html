@@ -111,6 +111,18 @@
   .hero .h3 b.up, .hero strong.up, .hero .uc b.up{color:#86EFAC;}
   .hero .h3 b.dn, .hero strong.dn, .hero .uc b.dn{color:#FCA5A5;}
   .hero strong{font-weight:800;}
+  .nx .nxh{font-weight:800; font-size:14px;}
+  .nx .nxs{font-size:11px; color:var(--muted); margin-top:3px; line-height:1.45;}
+  .nx .nb{border-top:1px solid var(--line); margin-top:12px; padding-top:10px;}
+  .nx .nbh{font-weight:800; font-size:13px; margin-bottom:6px;}
+  .nx .nch{display:flex; flex-wrap:wrap; gap:6px;}
+  .nx .nc{display:inline-flex; flex-direction:column; font-size:11px; font-weight:800; padding:4px 8px; border-radius:8px; line-height:1.3;}
+  .nx .nc small{font-weight:600; opacity:.85; font-size:10.5px;}
+  .nx .nc.dn{background:var(--bad-bg); color:var(--bad);} .nx .nc.up{background:var(--good-bg); color:var(--good);} .nx .nc.ok{background:var(--warn-bg); color:var(--warn);}
+  .nx .nk{font-size:10.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); margin-top:9px;}
+  .nx ul{margin:3px 0 0; padding-left:18px; font-size:13px; line-height:1.5; color:var(--text);}
+  .nx li+li{margin-top:2px;}
+  .nx .nf{font-size:12px; color:var(--text-2); margin-top:9px;}
   .hero .unote{font-size:10px; color:rgba(255,255,255,.7);}
   .hero .ud2{background:rgba(255,255,255,.14); border-radius:10px;}
   .hero .ud2>summary{list-style:none; cursor:pointer; background:none; -webkit-tap-highlight-color:transparent;}
@@ -661,6 +673,53 @@ function h3HTML(c, mu, full) {
   };
   return `<div class="h3">${col("RM Terkini", rm(c.actual), rm(full ? c.target : c.supposed), pc(c.actual, full ? c.target : c.supposed, true), cmpCls(c.actual, full ? c.target : c.supposed))}${unitCell(mu, pc)}${apuPhone("APU Phone Terkini", mu.rP, mu.uP, mu.tP, mu.tUP)}${apu("APU Repair Terkini", mu.rR, mu.uR, mu.tR, mu.tUR, mu.tUR > 0 ? APU_REPAIR : 0)}</div>`;
 }
+/** Panduan PIC (ikut "Analisis Harian" HQ): banding Sales (RM), Unit dan Avg (APU) setiap kategori dengan sasaran setakat hari ini. */
+const NX = {
+  Phone: {
+    "R|T|R": [["Banyak phone terjual.", "Kebanyakannya model murah."], ["Follow-up prospek model lebih tinggi.", "Padankan model dengan bajet pelanggan.", "Semak diskaun."]],
+    "T|R|T": [["Beberapa phone mahal sudah capai RM.", "Unit masih kurang."], ["Kejar baki unit.", "Follow-up juga pembeli model bajet.", "Jangan berhenti selepas capai RM."]],
+    "R|R|T": [["Nilai seunit sudah baik.", "Phone terjual terlalu sedikit."], ["Follow-up pelanggan yang tanya harga/stok.", "Kenal pasti sebab belum beli.", "Fokus tambah closing."]],
+    "R|R|R": [["Phone terjual sedikit.", "Kebanyakannya model murah."], ["Tambah closing prospek sedia ada.", "Tawarkan pilihan model lebih tinggi jika sesuai."]],
+    "T|T|R": [["Banyak phone murah terjual.", "Sasaran RM dan unit sudah lepas."], ["Kekalkan jualan.", "Semak margin dan diskaun.", "Avg rendah bukan terus gagal."]],
+    "C|C|C": [["RM dan unit tepat sasaran.", "Avg turut menepati sasaran."], ["Ulang cara closing yang berkesan.", "Pastikan stok model laris cukup."]],
+    "T|T|T": [["RM, unit dan Avg melebihi sasaran."], ["Kekalkan prestasi.", "Semak margin dan ketersediaan stok."]]
+  },
+  Repair: {
+    "R|T|R": [["Banyak servis caj rendah.", "Kurang kes tukar alat ganti."], ["Closing quotation LCD, bateri dan alat ganti.", "Follow-up kes belum confirm.", "Promosi servis repair berkaitan."]],
+    "T|R|T": [["Beberapa kes mahal sudah capai RM.", "Unit repair masih kurang."], ["Kejar baki unit.", "Follow-up kes belum confirm.", "Siapkan kes yang boleh selesai hari ini."]],
+    "R|R|T": [["Nilai setiap repair sudah baik.", "Terlalu sedikit unit menghasilkan sales."], ["Semak quotation pending.", "Atasi kelewatan alat ganti/kerja.", "Fokus tambah kes siap."]],
+    "R|R|R": [["Kes repair sedikit.", "Kebanyakannya servis caj rendah."], ["Tambah leads repair.", "Closing kes tukar alat ganti yang pending.", "Siapkan kerja yang sudah dipersetujui."]],
+    "T|T|R": [["Banyak kes caj kecil/sederhana.", "Sasaran RM dan unit sudah lepas."], ["Kekalkan hasil.", "Semak masa kerja dan kos alat ganti.", "Pastikan margin berbaloi."]],
+    "C|C|C": [["RM dan unit tepat sasaran.", "Avg turut menepati sasaran."], ["Kekalkan follow-up dan tempoh siap.", "Buat QC untuk kurangkan rework."]],
+    "T|T|T": [["RM, unit dan Avg melebihi sasaran."], ["Kekalkan kualiti dan tempoh siap.", "Pastikan alat ganti mencukupi."]]
+  }
+};
+function nxLvl(a, p) { const tol = Math.max(0.01 * p, 0.5); return a < p - tol ? "R" : a > p + tol ? "T" : "C"; }
+const NX_LBL = { R: "Rendah", C: "Capai", T: "Tinggi" }, NX_CLS = { R: "dn", C: "ok", T: "up" };
+function nxBlock(kind, rmA, rmP, uA, uP, avgP, bakiRM, bakiU, rem) {
+  const avgA = uA > 0 ? rmA / uA : 0, S = nxLvl(rmA, rmP), U = nxLvl(uA, uP), A = nxLvl(avgA, avgP), hit = NX[kind][`${S}|${U}|${A}`];
+  let mk, tk;
+  if (hit) { mk = hit[0]; tk = hit[1]; }
+  else {   // gabungan yang tiada dalam jadual: susun daripada setiap petunjuk
+    mk = [S === "R" ? "RM masih bawah sasaran." : "RM sudah menepati sasaran.", U === "R" ? "Unit masih kurang." : "Unit menepati sasaran.", A === "R" ? "Avg bawah sasaran." : "Avg menepati sasaran."];
+    tk = [];
+    if (U === "R") tk.push(kind === "Phone" ? "Tambah closing prospek sedia ada." : "Tambah leads dan siapkan kes pending.");
+    if (A === "R") tk.push(kind === "Phone" ? "Tawarkan pilihan model lebih tinggi jika sesuai." : "Closing quotation alat ganti dan servis berkaitan.");
+    if (!tk.length) tk.push("Kekalkan rentak dan semak margin.");
+  }
+  const chip = (n, v, a, p, m) => `<span class="nc ${NX_CLS[v]}">${n} ${NX_LBL[v]}<small>${m ? rm(Math.round(a)) : fmt(Math.round(a))} / ${m ? rm(Math.round(p)) : fmt(Math.round(p))}</small></span>`;
+  const baki = (bakiRM > 0 || bakiU > 0) ? `Baki bulan ini: <b>${rm(Math.max(0, Math.round(bakiRM)))}</b> · <b>${fmt(Math.max(0, Math.ceil(bakiU)))}</b> unit${rem > 0 && bakiRM > 0 ? ` (≈ ${rm(Math.ceil(bakiRM / rem))} sehari)` : ""}` : "Sasaran bulan ini sudah tercapai";
+  return `<div class="nb"><div class="nbh">${kind}</div><div class="nch">${chip("Sales", S, rmA, rmP, true)}${chip("Unit", U, uA, uP, false)}${chip("Avg", A, avgA, avgP, true)}</div>
+    <div class="nk">Maksud</div><ul>${mk.map(x => `<li>${x}</li>`).join("")}</ul><div class="nk">Tindakan PIC</div><ul>${tk.map(x => `<li>${x}</li>`).join("")}</ul><div class="nf">${baki}</div></div>`;
+}
+function nextHTML(c, mu, rem) {
+  if (!mu || !c || mu.uP + mu.uR <= 0) return "";
+  const bl = [];
+  if (mu.tUP > 0) { const avgP = mu.tP / mu.tUP; bl.push(nxBlock("Phone", mu.rP, avgP * mu.sP, mu.uP, mu.sP, avgP, mu.tP - mu.rP, mu.tUP - mu.uP, rem)); }
+  if (mu.tUR > 0) bl.push(nxBlock("Repair", mu.rR, APU_REPAIR * mu.sR, mu.uR, mu.sR, APU_REPAIR, mu.tR - mu.rR, mu.tUR - mu.uR, rem));
+  if (!bl.length) return "";
+  return `<div class="card nx"><div class="nxh">Seterusnya untuk PIC</div><div class="nxs">Banding dengan plan setakat hari ini · Rendah = bawah, Capai = tepat, Tinggi = lebih</div>${bl.join("")}<div class="nxs">Semak: kategori mana kurang? Berapa baki RM dan unit? Siapa buat tindakan dan bila?</div></div>`;
+}
 function heroHTML(eyebrow, c, extra, mu, full) {
   const d = diffOf(c), st = d >= 0 ? "s-ok" : (-d <= 0.1 * c.supposed ? "s-warn" : "s-bad");
   const pct = c.target ? Math.min(100, c.actual / c.target * 100) : 0, pace = c.target ? Math.min(100, c.supposed / c.target * 100) : 0;
@@ -737,7 +796,7 @@ function updateLive(o) {
   const dayTot = num(d.phone) + (o.hasRepair ? num(d.repair) : 0) + num(d.aksesori), ccti = Math.round(num(d.cc)) + Math.round(num(d.ti));
   setCats(ym, [o.code], d.date);
   $("heroBox").innerHTML = heroHTML(`Hari ke-${m.idxThru} / ${m.total} · ${MONTHS[Number(ym.slice(5)) - 1]}`, s,
-    `${o.name} · sasaran ${o.code.toUpperCase()} ${Math.round(s.target / 1000)}k · harian ${rm(m.daily.sales)}`, m.mu);
+    `${o.name} · sasaran ${o.code.toUpperCase()} ${Math.round(s.target / 1000)}k · harian ${rm(m.daily.sales)}`, m.mu) + nextHTML(s, m.mu, m.total - m.idxThru);
   $("dline").innerHTML = `<span>Jumlah jualan hari ni <b>${rm(dayTot)}</b></span><span>CCTI received <b>${ccti} unit</b></span>`;
   $("savedChip").innerHTML = d.saved ? `<span class="chip ok">✓ Dihantar${d.saved.pic ? " · " + esc(d.saved.pic) : ""}</span>` : '<span class="chip no">Belum dihantar</span>';
   $("editBar").innerHTML = (isPast || d.saved) ? `<div class="editbar">${isPast ? `Edit tarikh <b>${prettyDate(d.date)}</b>. ` : ""}${d.saved ? "Nombor baru <b>ganti</b> yang lama, bukan tambah." : "Tarikh ini belum ada data."}</div>` : "";
@@ -850,7 +909,7 @@ function renderMonth(v) {
   const single = per.length === 1, s = agg.month.sales;
   const eyebrow = single ? `Hari ke-${per[0].m.idxThru} / ${per[0].m.total} · ${MONTHS[Number(ym.slice(5)) - 1]}` : `Semua outlet · ${MONTHS[Number(ym.slice(5)) - 1]}`;
   setCats(ym, per.map(p => p.o.code), thru);
-  let html = monthChips() + heroHTML(eyebrow, s, single ? `${per[0].o.name} · harian ${rm(per[0].m.daily.sales)}` : `${per.length} outlet aktif`, agg.mu, true);
+  let html = monthChips() + heroHTML(eyebrow, s, single ? `${per[0].o.name} · harian ${rm(per[0].m.daily.sales)}` : `${per.length} outlet aktif`, agg.mu, true) + (single && ym === curYM() ? nextHTML(s, agg.mu, per[0].m.total - per[0].m.idxThru) : "");
   html += `<div class="card"><div class="sgrp">Ikut kategori</div>${CATS.filter(x => x.k !== "sales").map(x => rowHTML(x.name, x.unit, agg.month[x.k])).join("")}</div>`;
   if (!single) html += `<div class="card"><div class="sgrp">Ikut outlet</div>${per.map(p => `<div class="ocard" style="cursor:default"><div class="n">${esc(p.o.name)}<small>Sasaran ${rm(p.m.month.sales.target)} · hari ${p.m.idxThru}/${p.m.total}</small></div><div class="r"><b>${rm(p.m.month.sales.actual)}</b><span class="pill st-${statusOf(p.m.month.sales)}">${sgn(diffOf(p.m.month.sales), "RM")}</span></div></div>`).join("")}</div>`;
   // jadual harian
