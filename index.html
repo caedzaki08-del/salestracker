@@ -968,17 +968,19 @@ function renderMonth(v) {
     tot.sales += sales; if (wu.length) { tot.uP += uP; tot.uR += uR; tot.rP += rP; tot.rR += rR; }
     let unitC = "-", apuC = "-", res = '<span class="pill st-na">-</span>';
     if (wu.length) {
-      const aP = uP > 0 ? rP / uP : 0, aR = uR > 0 ? rR / uR : 0, okP = pP <= 0 || (uP >= pP - 1e-9 && aP >= avgPT), okR = pR <= 0 || (uR >= pR - 1e-9 && aR >= APU_REPAIR), showR = pR > 0 || uR > 0;
+      const aP = uP > 0 ? rP / uP : 0, aR = uR > 0 ? rR / uR : 0, showR = pR > 0 || uR > 0, rt = [];
+      if (pP > 0) rt.push(Math.min(1, uP / pP)); if (avgPT > 0 && pP > 0) rt.push(Math.min(1, aP / avgPT)); if (pR > 0) rt.push(Math.min(1, uR / pR), Math.min(1, aR / APU_REPAIR));
+      const pc100 = rt.length ? Math.round(rt.reduce((x, y) => x + y, 0) / rt.length * 100) : 0;
       unitC = nn(fmt(uP), cmpCls(uP, pP)) + (showR ? " · " + nn(fmt(uR), cmpCls(uR, pR)) : "");
       apuC = nn(uP > 0 ? fmt(aP) : "-", uP > 0 ? cmpCls(aP, avgPT) : "dn") + (showR ? " · " + nn(uR > 0 ? fmt(aR) : "-", uR > 0 ? cmpCls(aR, APU_REPAIR) : "dn") : "");
-      res = okP && okR ? '<span class="pill st-good">Capai</span>' : '<span class="pill st-bad">Tak</span>';
+      res = rt.length ? `<span class="pill st-${pc100 >= 100 ? "good" : pc100 >= 80 ? "warn" : "bad"}">${pc100}%</span>` : res;
     }
     rows.push(`<tr><td>${d} ${wd}${single ? "" : `<small>${es.length}/${openN} outlet</small>`}</td><td><b>${fmt(sales)}</b></td><td>${unitC}</td><td>${apuC}</td><td>${res}</td>${eb(date, single ? "✎" : "Buka")}</tr>`);
   }
   const tAP = tot.uP > 0 ? fmt(tot.rP / tot.uP) : "-", tAR = tot.uR > 0 ? fmt(tot.rR / tot.uR) : "-";
   html += `<div class="card"><div class="sgrp">Harian</div><table class="dtab dday"><thead><tr><th>Tarikh</th><th>RM</th><th>Unit<small>Phone · Repair</small></th><th>APU<small>Phone · Repair</small></th><th>Hasil</th><th></th></tr></thead><tbody>
     <tr class="tot"><td>Jumlah</td><td>${fmt(tot.sales)}</td><td>${fmt(tot.uP)}${hasR ? " · " + fmt(tot.uR) : ""}</td><td>${tAP}${hasR ? " · " + tAR : ""}</td><td></td><td class="ec"></td></tr>${rows.join("")}</tbody></table>
-    <div class="mnote">Capai = Unit Phone dan Repair sampai plan harian (sasaran sebulan ÷ hari operasi) dan APU sampai target. Kalau ada yang kurang, hari itu Tak. Hari operasi ditolak Rabu${per.some(p => p.o.opensWed) ? " (Kelang Lama buka setiap hari)" : ""} dan hari cuti. Baris kuning = hari buka yang belum ada laporan.</div></div>`;
+    <div class="mnote">Hasil = purata capaian Unit dan APU (Phone dan Repair) berbanding plan harian (sasaran sebulan ÷ hari operasi) dan target APU; setiap satu dihadkan 100%. 100% = semua capai, 80% ke atas kuning. Hari operasi ditolak Rabu${per.some(p => p.o.opensWed) ? " (Kelang Lama buka setiap hari)" : ""} dan hari cuti. Baris kuning = hari buka yang belum ada laporan.</div></div>`;
   v.innerHTML = html; bindMonthChips(v);
   v.querySelectorAll(".ebtn").forEach(b => b.onclick = async () => {
     const date = b.dataset.d;
