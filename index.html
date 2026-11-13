@@ -97,6 +97,17 @@
   .hero .h3>div{min-width:0;}
   .hero .h3 span{display:block; font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:rgba(255,255,255,.78);}
   .hero .h3 b{display:block; font-size:21px; font-weight:800; letter-spacing:-.03em; line-height:1.1; margin-top:3px; white-space:nowrap;}
+  .hero .h3 span{white-space:nowrap;}
+  .hero .h3 em{font-style:normal; font-weight:600; font-size:9px; letter-spacing:0; text-transform:none; opacity:.8; margin-left:2px;}
+  .hero .ud summary{list-style:none; cursor:pointer; -webkit-tap-highlight-color:transparent;}
+  .hero .ud summary::-webkit-details-marker{display:none;}
+  .hero .ud summary b u{text-decoration:none; font-size:12px; margin-left:6px; opacity:.8; display:inline-block; transition:transform .15s;}
+  .hero .ud[open] summary b u{transform:rotate(180deg);}
+  .hero .usub{margin-top:8px; display:grid; gap:6px;}
+  .hero .ur{display:flex; flex-wrap:wrap; align-items:center; gap:2px 6px; background:rgba(255,255,255,.14); border-radius:10px; padding:6px 8px; font-size:11px;}
+  .hero .ur b{font-size:11px; font-weight:700; margin:0; width:100%; display:block;}
+  .hero .ur span{font-size:11px; letter-spacing:0; text-transform:none; color:#fff; font-weight:600;}
+  .hero .ur i{margin:0;}
   .hero .h3 small{display:block; font-size:10.5px; color:rgba(255,255,255,.72); margin-top:2px; white-space:nowrap;}
   .hero .h3 i{display:inline-block; font-style:normal; font-size:11px; font-weight:800; margin-top:3px; padding:1px 7px; border-radius:99px; background:rgba(255,255,255,.18);}
   .hero .h3 i.ok{color:#86EFAC;} .hero .h3 i.wn{color:#FDE68A;} .hero .h3 i.bd{color:#FCA5A5;}
@@ -377,12 +388,13 @@ function outletMetrics(o, ym, thru, entries, cuti) {
   const withU = mine.filter(e => e.up !== undefined && e.up !== null);
   const unitT = (o.tUPhone || 0) + (o.hasRepair ? (o.tURepair || 0) : 0), mu = { unit: withU.reduce((a, e) => a + (e.up || 0) + (e.ur || 0), 0), rm: withU.reduce((a, e) => a + (e.phone || 0) + (e.repair || 0), 0), unitT, unitS: cal.total ? unitT * idxThru / cal.total : 0, rmT: T.phone + T.repair,
     uP: withU.reduce((x, e) => x + (e.up || 0), 0), uR: withU.reduce((x, e) => x + (e.ur || 0), 0), rP: withU.reduce((x, e) => x + (e.phone || 0), 0), rR: withU.reduce((x, e) => x + (e.repair || 0), 0),
-    tUP: o.tUPhone || 0, tUR: o.hasRepair ? (o.tURepair || 0) : 0, tP: T.phone, tR: T.repair };
+    tUP: o.tUPhone || 0, tUR: o.hasRepair ? (o.tURepair || 0) : 0, tP: T.phone, tR: T.repair,
+    sP: cal.total ? (o.tUPhone || 0) * idxThru / cal.total : 0, sR: cal.total && o.hasRepair ? (o.tURepair || 0) * idxThru / cal.total : 0 };
   return { cal, total: cal.total, idxThru, daily, month, weeks, T, mu };
 }
 function aggregate(per) {
   const add = (get) => { const r = {}; CATS.forEach(c => { r[c.k] = { actual: 0, target: 0, supposed: 0 }; per.forEach(p => { const x = get(p.m)[c.k]; r[c.k].actual += x.actual; r[c.k].target += x.target; r[c.k].supposed += x.supposed; }); }); return r; };
-  const out = { month: add(m => m.month), weeks: {}, mu: per.reduce((a, p) => ({ unit: a.unit + p.m.mu.unit, rm: a.rm + p.m.mu.rm, unitT: a.unitT + p.m.mu.unitT, unitS: a.unitS + p.m.mu.unitS, rmT: a.rmT + p.m.mu.rmT, uP: a.uP + p.m.mu.uP, uR: a.uR + p.m.mu.uR, rP: a.rP + p.m.mu.rP, rR: a.rR + p.m.mu.rR, tUP: a.tUP + p.m.mu.tUP, tUR: a.tUR + p.m.mu.tUR, tP: a.tP + p.m.mu.tP, tR: a.tR + p.m.mu.tR }), { unit: 0, rm: 0, unitT: 0, unitS: 0, rmT: 0, uP: 0, uR: 0, rP: 0, rR: 0, tUP: 0, tUR: 0, tP: 0, tR: 0 }) };
+  const out = { month: add(m => m.month), weeks: {}, mu: per.reduce((a, p) => ({ unit: a.unit + p.m.mu.unit, rm: a.rm + p.m.mu.rm, unitT: a.unitT + p.m.mu.unitT, unitS: a.unitS + p.m.mu.unitS, rmT: a.rmT + p.m.mu.rmT, uP: a.uP + p.m.mu.uP, uR: a.uR + p.m.mu.uR, rP: a.rP + p.m.mu.rP, rR: a.rR + p.m.mu.rR, tUP: a.tUP + p.m.mu.tUP, tUR: a.tUR + p.m.mu.tUR, tP: a.tP + p.m.mu.tP, tR: a.tR + p.m.mu.tR, sP: a.sP + p.m.mu.sP, sR: a.sR + p.m.mu.sR }), { unit: 0, rm: 0, unitT: 0, unitS: 0, rmT: 0, uP: 0, uR: 0, rP: 0, rR: 0, tUP: 0, tUR: 0, tP: 0, tR: 0, sP: 0, sR: 0 }) };
   for (let w = 1; w <= 4; w++) { out.weeks[w] = add(m => m.weeks[w]); out.weeks[w].range = per[0].m.weeks[w].range; out.weeks[w].started = per[0].m.weeks[w].started; }
   return out;
 }
@@ -593,12 +605,16 @@ async function render() {
   $("foot").innerHTML = DEMO ? "" : "Data jualan disimpan dalam sheet tracker. CC/TI received disalin ke sheet outlet.";
 }
 
+let UNIT_OPEN = false;
+document.addEventListener("toggle", e => { if (e.target.classList && e.target.classList.contains("ud")) UNIT_OPEN = e.target.open; }, true);
 const APU_REPAIR = 160;   // sasaran APU Repair ditetapkan HQ
 function h3HTML(c, mu) {
   const pc = (a, p) => { if (!(p > 0)) return ""; const r = Math.round(a / p * 100); return `<i class="${r >= 100 ? "ok" : r >= 80 ? "wn" : "bd"}">${r}%</i>`; };
   const col = (lab, big, plan, pct) => `<div><span>${lab}</span><b>${big}</b><small>Plan ${plan}</small>${pct}</div>`;
+  const sub = (n, a, p, t) => t > 0 ? `<div class="ur"><b>${n}</b><span>${fmt(a)} / Plan ${f1(p)}</span>${pc(a, p)}</div>` : "";
+  const unitCell = (mu, pc) => `<details class="ud"${UNIT_OPEN ? " open" : ""}><summary><span>Unit Terkini <em>Phone+Repair</em></span><b>${fmt(mu.unit)}<u>▾</u></b><small>Plan ${mu.unitT > 0 ? f1(mu.unitS) : "-"}</small>${pc(mu.unit, mu.unitS)}</summary><div class="usub">${sub("Unit Phone", mu.uP, mu.sP, mu.tUP)}${sub("Unit Repair", mu.uR, mu.sR, mu.tUR)}</div></details>`;
   const apu = (lab, r, u, tr, tu, fix) => { const a = u > 0 ? r / u : 0, p = fix || (tu > 0 ? tr / tu : 0); return col(lab, u > 0 ? rm(Math.round(a)) : "-", p > 0 ? rm(Math.round(p)) : "-", u > 0 ? pc(a, p) : ""); };
-  return `<div class="h3">${col("RM MTD", rm(c.actual), rm(c.supposed), pc(c.actual, c.supposed))}${col("Unit MTD", fmt(mu.unit), mu.unitT > 0 ? f1(mu.unitS) : "-", pc(mu.unit, mu.unitS))}${apu("APU Phone", mu.rP, mu.uP, mu.tP, mu.tUP)}${apu("APU Repair", mu.rR, mu.uR, mu.tR, mu.tUR, mu.tUR > 0 ? APU_REPAIR : 0)}</div>`;
+  return `<div class="h3">${col("RM Terkini", rm(c.actual), rm(c.supposed), pc(c.actual, c.supposed))}${unitCell(mu, pc)}${apu("APU Phone Terkini", mu.rP, mu.uP, mu.tP, mu.tUP)}${apu("APU Repair Terkini", mu.rR, mu.uR, mu.tR, mu.tUR, mu.tUR > 0 ? APU_REPAIR : 0)}</div>`;
 }
 function heroHTML(eyebrow, c, extra, mu) {
   const d = diffOf(c), st = d >= 0 ? "s-ok" : (-d <= 0.1 * c.supposed ? "s-warn" : "s-bad");
