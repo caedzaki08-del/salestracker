@@ -108,6 +108,9 @@
   .hero .ur b{font-size:11px; font-weight:700; margin:0; width:100%; display:block;}
   .hero .ur span{font-size:11px; letter-spacing:0; text-transform:none; color:#fff; font-weight:600;}
   .hero .ur i{margin:0;}
+  .hero .h3 b.up, .hero strong.up, .hero .uc b.up{color:#86EFAC;}
+  .hero .h3 b.dn, .hero strong.dn, .hero .uc b.dn{color:#FCA5A5;}
+  .hero strong{font-weight:800;}
   .hero .unote{font-size:10px; color:rgba(255,255,255,.7);}
   .hero .ud2{background:rgba(255,255,255,.14); border-radius:10px;}
   .hero .ud2>summary{list-style:none; cursor:pointer; background:none; -webkit-tap-highlight-color:transparent;}
@@ -153,6 +156,7 @@
   .fb .fc .t{display:flex; justify-content:space-between; align-items:center; font-weight:800; font-size:14px;}
   .fb .fm{display:grid; grid-template-columns:44px 1fr auto; gap:2px 8px; font-size:12.5px; margin-top:8px; align-items:center;}
   .fb .fm span.k{color:var(--muted); font-weight:700;}
+  .fb .fm b.up{color:#15803D;} .fb .fm b.dn{color:#DC2626;}
   .fb .fm b{font-weight:800;} .fb .fm em{font-style:normal; color:var(--muted);}
   .fb .dotc{width:9px; height:9px; border-radius:50%; display:inline-block;}
   .fb .dotc.good{background:var(--good);} .fb .dotc.warn{background:var(--warn);} .fb .dotc.bad{background:var(--bad);} .fb .dotc.na{background:var(--line);}
@@ -623,6 +627,8 @@ let UNIT_OPEN = false, APU_OPEN = false, UPH_OPEN = false, CAT_NOW = null;
 document.addEventListener("toggle", e => { const t = e.target, k = t.dataset && t.dataset.k; if (k === "a") APU_OPEN = t.open; else if (k === "u") UNIT_OPEN = t.open; else if (k === "p") UPH_OPEN = t.open; }, true);
 // t = APU target baru; q = sasaran unit sebulan (satu outlet Kliki, jumlah 102). Outlet lain diskala ikut sasaran unit Phone outlet itu.
 /** Beza daripada plan: "Kurang x" / "Lebih x" (tiada peratus). */
+/** Kelas warna nombor actual: hijau (up) kalau capai plan, merah (dn) kalau kurang. */
+function cmpCls(a, p) { return p > 0 ? (a >= p ? "up" : "dn") : ""; }
 function gapTxt(a, p, money) { const d = a - p; return (d >= 0 ? "Lebih " : "Kurang ") + (money ? rm(Math.round(Math.abs(d))) : f1(Math.abs(d))); }
 const APU_CAT = [{ u: "au", r: "ar", name: "Apple Used", t: 1786, q: 44 }, { u: "pn", r: "pr", name: "Apple New", t: 3918, q: 3 }, { u: "dn", r: "dr", name: "Android New", t: 1202, q: 30 }, { u: "cu", r: "cr", name: "CCTI Sold", t: 1144, q: 25 }];
 /** Pecahan kategori Phone dari sheet outlet (baca sahaja), jumlah untuk outlet terpilih sehingga tarikh thru. */
@@ -637,23 +643,23 @@ const APU_REPAIR = 160;   // sasaran APU Repair ditetapkan HQ
 function h3HTML(c, mu, full) {
   if (full) mu = Object.assign({}, mu, { unitS: mu.unitT, sP: mu.tUP, sR: mu.tUR });
   const pc = (a, p, m) => { if (!(p > 0)) return ""; const r = a / p; return `<i class="${r >= 1 ? "ok" : r >= 0.8 ? "wn" : "bd"}">${gapTxt(a, p, m)}</i>`; };
-  const col = (lab, big, plan, pct) => `<div><span>${lab}</span><b>${big}</b><small>Plan ${plan}</small>${pct}</div>`;
-  const sub = (n, a, p, t) => t > 0 ? `<div class="ur"><b>${n}</b><span>${fmt(a)} / Plan ${f1(p)}</span>${pc(a, p)}</div>` : "";
+  const col = (lab, big, plan, pct, cls) => `<div><span>${lab}</span><b class="${cls || ""}">${big}</b><small>Plan ${plan}</small>${pct}</div>`;
+  const sub = (n, a, p, t) => t > 0 ? `<div class="ur"><b>${n}</b><span><strong class="${cmpCls(a, p)}">${fmt(a)}</strong> / Plan ${f1(p)}</span>${pc(a, p)}</div>` : "";
   const phoneSub = (a, p, t) => {
     if (!(t > 0)) return "";
     if (!CAT_NOW) return sub("Unit Phone", a, p, t);
-    const rows = APU_CAT.map(k => `<div class="uc"><span>${k.name}</span><b>${fmt(CAT_NOW[k.u])}</b><em>Plan ${f1(k.q * mu.sP / 102)}</em></div>`).join("");
-    return `<details class="ud2" data-k="p"${UPH_OPEN ? " open" : ""}><summary class="ur"><b>Unit Phone <s class="ch">\u25be</s></b><span>${fmt(a)} / Plan ${f1(p)}</span>${pc(a, p)}</summary><div class="ucs">${rows}<div class="unote">Ikut sheet outlet sehingga ${shortDate(CAT_NOW.last)}</div></div></details>`;
+    const rows = APU_CAT.map(k => `<div class="uc"><span>${k.name}</span><b class="${cmpCls(CAT_NOW[k.u], k.q * mu.sP / 102)}">${fmt(CAT_NOW[k.u])}</b><em>Plan ${f1(k.q * mu.sP / 102)}</em></div>`).join("");
+    return `<details class="ud2" data-k="p"${UPH_OPEN ? " open" : ""}><summary class="ur"><b>Unit Phone <s class="ch">\u25be</s></b><span><strong class="${cmpCls(a, p)}">${fmt(a)}</strong> / Plan ${f1(p)}</span>${pc(a, p)}</summary><div class="ucs">${rows}<div class="unote">Ikut sheet outlet sehingga ${shortDate(CAT_NOW.last)}</div></div></details>`;
   };
-  const unitCell = (mu, pc) => `<details class="ud" data-k="u"${UNIT_OPEN ? " open" : ""}><summary><span>Unit Terkini <em>Phone+Repair</em></span><b>${fmt(mu.unit)}<u>▾</u></b><small>Plan ${mu.unitT > 0 ? f1(mu.unitS) : "-"}</small>${pc(mu.unit, mu.unitS)}</summary><div class="usub">${phoneSub(mu.uP, mu.sP, mu.tUP)}${sub("Unit Repair", mu.uR, mu.sR, mu.tUR)}</div></details>`;
-  const apu = (lab, r, u, tr, tu, fix) => { const a = u > 0 ? r / u : 0, p = fix || (tu > 0 ? tr / tu : 0); return col(lab, u > 0 ? rm(Math.round(a)) : "-", p > 0 ? rm(Math.round(p)) : "-", u > 0 ? pc(a, p, true) : ""); };
+  const unitCell = (mu, pc) => `<details class="ud" data-k="u"${UNIT_OPEN ? " open" : ""}><summary><span>Unit Terkini <em>Phone+Repair</em></span><b class="${cmpCls(mu.unit, mu.unitS)}">${fmt(mu.unit)}<u>▾</u></b><small>Plan ${mu.unitT > 0 ? f1(mu.unitS) : "-"}</small>${pc(mu.unit, mu.unitS)}</summary><div class="usub">${phoneSub(mu.uP, mu.sP, mu.tUP)}${sub("Unit Repair", mu.uR, mu.sR, mu.tUR)}</div></details>`;
+  const apu = (lab, r, u, tr, tu, fix) => { const a = u > 0 ? r / u : 0, p = fix || (tu > 0 ? tr / tu : 0); return col(lab, u > 0 ? rm(Math.round(a)) : "-", p > 0 ? rm(Math.round(p)) : "-", u > 0 ? pc(a, p, true) : "", u > 0 ? cmpCls(a, p) : ""); };
   const apuPhone = (lab, r, u, tr, tu) => {
     if (!CAT_NOW) return apu(lab, r, u, tr, tu);
     const a = u > 0 ? r / u : 0, p = tu > 0 ? tr / tu : 0;
-    const rows = APU_CAT.map(k => { const n = CAT_NOW[k.u], v = CAT_NOW[k.r], ap = n > 0 ? v / n : 0; return `<div class="ur"><b>${k.name}</b><span>${fmt(n)} unit · APU ${n > 0 ? rm(Math.round(ap)) : "-"}</span><span>Target ${rm(k.t)}</span>${n > 0 ? pc(ap, k.t, true) : ""}</div>`; }).join("");
-    return `<details class="ud" data-k="a"${APU_OPEN ? " open" : ""}><summary><span>${lab}</span><b>${u > 0 ? rm(Math.round(a)) : "-"}<u>\u25be</u></b><small>Plan ${p > 0 ? rm(Math.round(p)) : "-"}</small>${u > 0 ? pc(a, p, true) : ""}</summary><div class="usub">${rows}<div class="unote">Ikut sheet outlet sehingga ${shortDate(CAT_NOW.last)}</div></div></details>`;
+    const rows = APU_CAT.map(k => { const n = CAT_NOW[k.u], v = CAT_NOW[k.r], ap = n > 0 ? v / n : 0; return `<div class="ur"><b>${k.name}</b><span>${fmt(n)} unit · APU <strong class="${n > 0 ? cmpCls(ap, k.t) : ""}">${n > 0 ? rm(Math.round(ap)) : "-"}</strong></span><span>Target ${rm(k.t)}</span>${n > 0 ? pc(ap, k.t, true) : ""}</div>`; }).join("");
+    return `<details class="ud" data-k="a"${APU_OPEN ? " open" : ""}><summary><span>${lab}</span><b class="${u > 0 ? cmpCls(a, p) : ""}">${u > 0 ? rm(Math.round(a)) : "-"}<u>\u25be</u></b><small>Plan ${p > 0 ? rm(Math.round(p)) : "-"}</small>${u > 0 ? pc(a, p, true) : ""}</summary><div class="usub">${rows}<div class="unote">Ikut sheet outlet sehingga ${shortDate(CAT_NOW.last)}</div></div></details>`;
   };
-  return `<div class="h3">${col("RM Terkini", rm(c.actual), rm(full ? c.target : c.supposed), pc(c.actual, full ? c.target : c.supposed, true))}${unitCell(mu, pc)}${apuPhone("APU Phone Terkini", mu.rP, mu.uP, mu.tP, mu.tUP)}${apu("APU Repair Terkini", mu.rR, mu.uR, mu.tR, mu.tUR, mu.tUR > 0 ? APU_REPAIR : 0)}</div>`;
+  return `<div class="h3">${col("RM Terkini", rm(c.actual), rm(full ? c.target : c.supposed), pc(c.actual, full ? c.target : c.supposed, true), cmpCls(c.actual, full ? c.target : c.supposed))}${unitCell(mu, pc)}${apuPhone("APU Phone Terkini", mu.rP, mu.uP, mu.tP, mu.tUP)}${apu("APU Repair Terkini", mu.rR, mu.uR, mu.tR, mu.tUR, mu.tUR > 0 ? APU_REPAIR : 0)}</div>`;
 }
 function heroHTML(eyebrow, c, extra, mu, full) {
   const d = diffOf(c), st = d >= 0 ? "s-ok" : (-d <= 0.1 * c.supposed ? "s-warn" : "s-bad");
@@ -786,12 +792,12 @@ function feedbackHTML(o, ym, date, entries, cuti) {
     else if (sU !== "good" && sU !== "na" && (sA === "good" || sA === "na")) tip = `APU baik, unit kurang. Perlu lagi ${Math.max(1, Math.ceil(unD - unA))} unit untuk capai sasaran harian.`;
     else tip = `Unit dan APU kedua-duanya di bawah sasaran. Kejar bilangan jualan dan naikkan harga purata.`;
     rows.push(`<div class="fc"><div class="t"><span>${c.name}</span><span class="dotc ${sR}"></span></div><div class="fm">
-      <span class="k">RM</span><b>${rm(rmA)}</b><em>sasaran ${rm(rmD)} · ${pc(rmA, rmD, true)}</em>
-      <span class="k">Unit</span><b>${unA === undefined ? "-" : fmt(unA)}</b><em>${unD ? `sasaran ${f1(unD)} · ${pc(unA || 0, unD)}` : "tiada sasaran"}</em>
-      <span class="k">APU</span><b>${unA > 0 ? rm(apuA) : "-"}</b><em>${apuT ? `sasaran ${rm(apuT)}` : "tiada sasaran"}</em></div><div class="tip">${tip}</div></div>`);
+      <span class="k">RM</span><b class="${cmpCls(rmA, rmD)}">${rm(rmA)}</b><em>sasaran ${rm(rmD)} · ${pc(rmA, rmD, true)}</em>
+      <span class="k">Unit</span><b class="${unD ? cmpCls(unA || 0, unD) : ""}">${unA === undefined ? "-" : fmt(unA)}</b><em>${unD ? `sasaran ${f1(unD)} · ${pc(unA || 0, unD)}` : "tiada sasaran"}</em>
+      <span class="k">APU</span><b class="${unA > 0 ? cmpCls(apuA, apuT) : ""}">${unA > 0 ? rm(apuA) : "-"}</b><em>${apuT ? `sasaran ${rm(apuT)}` : "tiada sasaran"}</em></div><div class="tip">${tip}</div></div>`);
   });
   const aA = dv.aksesori, aD = m.daily.aksesori, sA2 = st(aA, aD); tot++; if (sA2 === "good") hit++;
-  rows.push(`<div class="fc"><div class="t"><span>Aksesori</span><span class="dotc ${sA2}"></span></div><div class="fm"><span class="k">RM</span><b>${rm(aA)}</b><em>sasaran ${rm(aD)} · ${pc(aA, aD, true)}</em></div></div>`);
+  rows.push(`<div class="fc"><div class="t"><span>Aksesori</span><span class="dotc ${sA2}"></span></div><div class="fm"><span class="k">RM</span><b class="${cmpCls(aA, aD)}">${rm(aA)}</b><em>sasaran ${rm(aD)} · ${pc(aA, aD, true)}</em></div></div>`);
   const head = hit === tot ? "Semua kategori capai sasaran harian. Mantap!" : hit === 0 ? "Hari ni belum capai sasaran harian. Esok kita kejar semula." : `${hit} daripada ${tot} kategori capai sasaran RM harian.`;
   return `<div class="fh">${head}</div>` + rows.join("");
 }
