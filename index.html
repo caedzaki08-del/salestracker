@@ -118,7 +118,7 @@
   .hero .uc{display:flex; align-items:baseline; gap:6px; font-size:11px;}
   .hero .uc span{flex:1; letter-spacing:0; text-transform:none; color:rgba(255,255,255,.85);}
   .hero .uc b{font-size:12px; margin:0; width:auto; display:inline;}
-  .hero .uc em{font-style:normal; font-size:10px; opacity:.7; margin:0; min-width:30px; text-align:right;}
+  .hero .uc em{font-style:normal; font-size:10.5px; opacity:.85; margin:0; min-width:62px; text-align:right;}
   .hero .ud[data-k=a][open]{grid-column:1/-1;}
   .hero .ud[data-k=a] .usub{grid-template-columns:1fr 1fr;}
   .hero .ud[data-k=a] .unote{grid-column:1/-1;}
@@ -445,7 +445,7 @@ function buildReport(o, ym, date, entries, cuti, today) {
 const DEMO_TODAY = "2026-10-26";
 const DEMO_DB = (() => {
   const outlets = [
-    { code: "aor", name: "Alor Setar", active: true, hasRepair: true, opensWed: false, tPhone: 155000, tRepair: 22000, tAkse: 3000, tCcti: 30, tUPhone: 88, tURepair: 115 },
+    { code: "aor", name: "Alor Setar", active: true, hasRepair: true, opensWed: false, tPhone: 155000, tRepair: 22000, tAkse: 3000, tCcti: 30, tUPhone: 102, tURepair: 115 },
     { code: "sgp", name: "Sungai Petani", active: true, hasRepair: true, opensWed: false, tPhone: 155000, tRepair: 22000, tAkse: 3000, tCcti: 30 },
     { code: "pdg", name: "Pendang", active: true, hasRepair: false, opensWed: false, tPhone: 99000, tRepair: 0, tAkse: 1000, tCcti: 10 },
     { code: "kll", name: "Kelang Lama", active: true, hasRepair: true, opensWed: true, tPhone: 155000, tRepair: 22000, tAkse: 3000, tCcti: 30 },
@@ -621,7 +621,8 @@ async function render() {
 
 let UNIT_OPEN = false, APU_OPEN = false, UPH_OPEN = false, CAT_NOW = null;
 document.addEventListener("toggle", e => { const t = e.target, k = t.dataset && t.dataset.k; if (k === "a") APU_OPEN = t.open; else if (k === "u") UNIT_OPEN = t.open; else if (k === "p") UPH_OPEN = t.open; }, true);
-const APU_CAT = [{ u: "au", r: "ar", name: "Apple Used", t: 2032 }, { u: "pn", r: "pr", name: "Apple New", t: 4457 }, { u: "dn", r: "dr", name: "Android New", t: 1368 }, { u: "cu", r: "cr", name: "CCTI Sold", t: 1301 }];
+// t = APU target baru; q = sasaran unit sebulan (satu outlet Kliki, jumlah 102). Outlet lain diskala ikut sasaran unit Phone outlet itu.
+const APU_CAT = [{ u: "au", r: "ar", name: "Apple Used", t: 1786, q: 44 }, { u: "pn", r: "pr", name: "Apple New", t: 3918, q: 3 }, { u: "dn", r: "dr", name: "Android New", t: 1202, q: 30 }, { u: "cu", r: "cr", name: "CCTI Sold", t: 1144, q: 25 }];
 /** Pecahan kategori Phone dari sheet outlet (baca sahaja), jumlah untuk outlet terpilih sehingga tarikh thru. */
 function setCats(ym, codes, thru) {
   const list = ((S.cache[ym] || {}).cats || []).filter(x => codes.indexOf(x.outlet) >= 0 && x.date <= thru);
@@ -639,8 +640,7 @@ function h3HTML(c, mu, full) {
   const phoneSub = (a, p, t) => {
     if (!(t > 0)) return "";
     if (!CAT_NOW) return sub("Unit Phone", a, p, t);
-    const tot = APU_CAT.reduce((x, k) => x + CAT_NOW[k.u], 0);
-    const rows = APU_CAT.map(k => `<div class="uc"><span>${k.name}</span><b>${fmt(CAT_NOW[k.u])}</b><em>${tot > 0 ? Math.round(CAT_NOW[k.u] / tot * 100) : 0}%</em></div>`).join("");
+    const rows = APU_CAT.map(k => `<div class="uc"><span>${k.name}</span><b>${fmt(CAT_NOW[k.u])}</b><em>Plan ${f1(k.q * mu.sP / 102)}</em></div>`).join("");
     return `<details class="ud2" data-k="p"${UPH_OPEN ? " open" : ""}><summary class="ur"><b>Unit Phone <s class="ch">\u25be</s></b><span>${fmt(a)} / Plan ${f1(p)}</span>${pc(a, p)}</summary><div class="ucs">${rows}<div class="unote">Ikut sheet outlet sehingga ${shortDate(CAT_NOW.last)}</div></div></details>`;
   };
   const unitCell = (mu, pc) => `<details class="ud" data-k="u"${UNIT_OPEN ? " open" : ""}><summary><span>Unit Terkini <em>Phone+Repair</em></span><b>${fmt(mu.unit)}<u>▾</u></b><small>Plan ${mu.unitT > 0 ? f1(mu.unitS) : "-"}</small>${pc(mu.unit, mu.unitS)}</summary><div class="usub">${phoneSub(mu.uP, mu.sP, mu.tUP)}${sub("Unit Repair", mu.uR, mu.sR, mu.tUR)}</div></details>`;
