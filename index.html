@@ -265,6 +265,23 @@
   .srow .a b{font-size:17px; color:var(--text); font-weight:800; display:block;}
   .srow .bar{margin-left:32px; height:7px; margin-top:8px;} .srow .bar .pace{top:-3px; bottom:-3px;}
   .srow .why{margin:6px 0 0 32px; font-size:12px; color:var(--text-2);}
+  .srow .mxd, .srow>.mxs{margin:10px 0 0 32px;}
+  .mxd>summary{list-style:none; cursor:pointer; position:relative; -webkit-tap-highlight-color:transparent;}
+  .mxd>summary::-webkit-details-marker{display:none;}
+  .mxs{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .mc{background:var(--surface-2); border-radius:10px; padding:8px 10px; min-width:0;}
+  .mc span{display:block; font-size:10.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted);}
+  .mc b{display:block; font-size:16px; font-weight:800; margin-top:2px; white-space:nowrap;}
+  .mc small{display:block; font-size:11px; color:var(--muted); white-space:nowrap;}
+  .mc i{display:inline-block; font-style:normal; font-size:11px; font-weight:700; margin-top:3px; white-space:nowrap;}
+  .mx .up, .mc .up, .mcs .up{color:var(--good);} .mc .dn, .mcs .dn{color:var(--bad);}
+  .mxh{display:flex; justify-content:flex-end; align-items:center; gap:4px; font-size:11.5px; font-weight:700; color:var(--brand); margin-top:6px;}
+  .mxh s{text-decoration:none; display:inline-block; transition:transform .15s;}
+  .mxd[open] .mxh s{transform:rotate(180deg);}
+  .mcs{margin-top:8px; display:grid; gap:6px;}
+  .mcr{display:flex; flex-wrap:wrap; gap:2px 12px; background:var(--surface-2); border-radius:10px; padding:7px 10px; font-size:12px;}
+  .mcr b{width:100%; font-size:12px;}
+  .mcr strong{font-weight:800;}
   .dtab{width:100%; border-collapse:collapse; font-size:13px;}
   .dtab th{font-size:10.5px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; text-align:right; padding:0 0 8px;}
   .dtab th:first-child,.dtab td:first-child{text-align:left;}
@@ -646,8 +663,8 @@ async function render() {
   $("foot").innerHTML = DEMO ? "" : "Data jualan disimpan dalam sheet tracker. CC/TI received disalin ke sheet outlet.";
 }
 
-let UNIT_OPEN = false, APU_OPEN = false, UPH_OPEN = false, NX_OPEN = false, RM_OPEN = false, CAT_NOW = null;
-document.addEventListener("toggle", e => { const t = e.target, k = t.dataset && t.dataset.k; if (k === "a") APU_OPEN = t.open; else if (k === "u") UNIT_OPEN = t.open; else if (k === "p") UPH_OPEN = t.open; else if (k === "n") NX_OPEN = t.open; else if (k === "r") RM_OPEN = t.open; }, true);
+let UNIT_OPEN = false, APU_OPEN = false, UPH_OPEN = false, NX_OPEN = false, RM_OPEN = false, MX_OPEN = false, CAT_NOW = null;
+document.addEventListener("toggle", e => { const t = e.target, k = t.dataset && t.dataset.k; if (k === "a") APU_OPEN = t.open; else if (k === "u") UNIT_OPEN = t.open; else if (k === "p") UPH_OPEN = t.open; else if (k === "n") NX_OPEN = t.open; else if (k === "r") RM_OPEN = t.open; else if (k === "m") MX_OPEN = t.open; }, true);
 // t = APU target baru; q = sasaran unit sebulan (satu outlet Kliki, jumlah 102). Outlet lain diskala ikut sasaran unit Phone outlet itu.
 /** Beza daripada plan: "Kurang x" / "Lebih x" (tiada peratus). */
 /** Kelas warna nombor actual: hijau (up) kalau capai plan, merah (dn) kalau kurang. */
@@ -925,7 +942,7 @@ function renderMonth(v) {
   const eyebrow = single ? `Hari ke-${per[0].m.idxThru} / ${per[0].m.total} · ${MONTHS[Number(ym.slice(5)) - 1]}` : `Semua outlet · ${MONTHS[Number(ym.slice(5)) - 1]}`;
   setCats(ym, per.map(p => p.o.code), thru);
   let html = monthChips() + heroHTML(eyebrow, s, single ? `${per[0].o.name} · harian ${rm(per[0].m.daily.sales)}` : `${per.length} outlet aktif`, agg.mu, true, agg.month) + (single && ym === curYM() ? nextHTML(s, agg.mu, per[0].m.total - per[0].m.idxThru) : "");
-  html += `<div class="card"><div class="sgrp">Ikut kategori</div>${CATS.filter(x => x.k !== "sales").map(x => rowHTML(x.name, x.unit, agg.month[x.k])).join("")}</div>`;
+  html += `<div class="card"><div class="sgrp">Ikut kategori</div>${CATS.filter(x => x.k !== "sales").map(x => { const m = agg.mu, ex = !m || m.uP + m.uR <= 0 ? "" : x.k === "phone" ? mxHTML("Phone", m.rP, m.uP, m.tUP, m.tUP > 0 ? m.tP / m.tUP : 0) : x.k === "repair" ? mxHTML("Repair", m.rR, m.uR, m.tUR, APU_REPAIR) : ""; return rowHTML(x.name, x.unit, agg.month[x.k], ex); }).join("")}</div>`;
   if (!single) html += `<div class="card"><div class="sgrp">Ikut outlet</div>${per.map(p => `<div class="ocard" style="cursor:default"><div class="n">${esc(p.o.name)}<small>Sasaran ${rm(p.m.month.sales.target)} · hari ${p.m.idxThru}/${p.m.total}</small></div><div class="r"><b>${rm(p.m.month.sales.actual)}</b><span class="pill st-${statusOf(p.m.month.sales)}">${sgn(diffOf(p.m.month.sales), "RM")}</span></div></div>`).join("")}</div>`;
   // jadual harian
   const [y, mo] = ym.split("-").map(Number), n = dim(y, mo), lastD = thru.startsWith(ym) ? Number(thru.slice(8)) : 0, rows = [];
@@ -952,14 +969,24 @@ function renderMonth(v) {
 }
 
 /* ----- Skor ----- */
-function rowHTML(name, unit, c) {
+function rowHTML(name, unit, c, extra) {
   const st = statusOf(c), d = diffOf(c), sym = { good: "✓", warn: "!", bad: "✕", na: "–" }[st];
   if (!c.target) return `<div class="srow"><div class="t"><span class="ic na">–</span><div class="n">${name}<small>Tiada sasaran / tidak berkenaan</small></div><div class="a"><b>${fv(c.actual, unit)}</b></div></div></div>`;
   const pct = Math.min(100, c.actual / c.target * 100), pace = Math.min(100, c.supposed / c.target * 100), left = c.target - c.actual;
   const why = `${d >= 0 ? "Lebih" : "Kurang"} ${fv(Math.abs(d), unit)} daripada sepatutnya (${fv(c.supposed, unit)})` + (left > 0 ? ` · baki ${fv(left, unit)} ke sasaran` : " · sasaran dicapai");
   return `<div class="srow"><div class="t"><span class="ic ${st}">${sym}</span><div class="n">${name}<small>Sasaran ${fv(c.target, unit)}</small></div>
     <div class="a"><b>${fv(c.actual, unit)}</b><span class="pill st-${st}">${sgn(d, unit)}</span></div></div>
-    <div class="bar"><i class="${st}" style="width:${pct}%"></i><span class="pace" style="left:${pace}%"></span></div><div class="why">${why}</div></div>`;
+    <div class="bar"><i class="${st}" style="width:${pct}%"></i><span class="pace" style="left:${pace}%"></span></div><div class="why">${why}</div>${extra || ""}</div>`;
+}
+/** Unit + APU sebulan untuk satu kategori (Phone/Repair), dengan Phone boleh expand ke pecahan kategori. Plan = sasaran sebulan penuh. */
+function mxHTML(kind, rA, uA, tU, avgT) {
+  if (!(tU > 0)) return "";
+  const avgA = uA > 0 ? rA / uA : 0;
+  const cell = (lab, av, pl, a, p, money) => `<div class="mc"><span>${lab}</span><b class="${cmpCls(a, p)}">${av}</b><small>Plan ${pl}</small><i class="${cmpCls(a, p)}">${gapTxt(a, p, money)}</i></div>`;
+  const strip = `<div class="mxs">${cell("Unit", fmt(uA), fmt(tU), uA, tU, false)}${uA > 0 ? cell("APU", rm(Math.round(avgA)), rm(Math.round(avgT)), avgA, avgT, true) : `<div class="mc"><span>APU</span><b>-</b><small>Plan ${rm(Math.round(avgT))}</small></div>`}</div>`;
+  if (kind !== "Phone" || !CAT_NOW) return strip;
+  const rows = APU_CAT.map(k => { const n = CAT_NOW[k.u], p = k.q * tU / 102, ap = n > 0 ? CAT_NOW[k.r] / n : 0; return `<div class="mcr"><b>${k.name}</b><span>Unit <strong class="${cmpCls(n, p)}">${fmt(n)}</strong> / Plan ${f1(p)}</span><span>APU <strong class="${n > 0 ? cmpCls(ap, k.t) : ""}">${n > 0 ? rm(Math.round(ap)) : "-"}</strong> / Target ${rm(k.t)}</span></div>`; }).join("");
+  return `<details class="mxd" data-k="m"${MX_OPEN ? " open" : ""}><summary>${strip}<span class="mxh">Kategori <s>▾</s></span></summary><div class="mcs">${rows}<div class="mnote">Ikut sheet outlet sehingga ${shortDate(CAT_NOW.last)}</div></div></details>`;
 }
 function ring(p, st) { const r = 32, C = 2 * Math.PI * r, off = C * (1 - Math.min(1, p));
   return `<div class="sring ${st}" style="position:relative;width:76px;height:76px;flex:none"><svg viewBox="0 0 76 76" style="width:76px;height:76px;transform:rotate(-90deg)"><circle cx="38" cy="38" r="${r}" fill="none" stroke="var(--surface-2)" stroke-width="8"/><circle cx="38" cy="38" r="${r}" fill="none" stroke="var(--${st === "na" ? "muted" : st})" stroke-width="8" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${off}"/></svg>
