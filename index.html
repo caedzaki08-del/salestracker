@@ -585,7 +585,7 @@ async function render() {
   if (S.tab === "today") S.scope === "*" ? renderHqToday(v) : renderToday(v);
   else if (S.tab === "month") renderMonth(v);
   else renderScore(v);
-  $("foot").innerHTML = DEMO ? "" : "Data jualan disimpan dalam sheet tracker. CC/TI received disalin ke master HQ.";
+  $("foot").innerHTML = DEMO ? "" : "Data jualan disimpan dalam sheet tracker. CC/TI received disalin ke sheet outlet.";
 }
 
 function heroHTML(eyebrow, c, extra, mu) {
@@ -681,7 +681,7 @@ async function sendReport(o) {
   if (!readyToSend(o)) return;
   const btn = $("btnSend"); btn.disabled = true; const p = payloadFor(o); let queued = false;
   try { const r = await api("submit", p); applyEntry(r.entry); S.draft.saved = r.entry;
-    toast(/^(OK|DEMO)/.test(r.sync || "") || !r.sync ? (r.edited ? "Ditukar & disimpan ke sheet" : "Disimpan ke sheet") : "Disimpan. CCTI ke master: " + r.sync, 3200);
+    toast(/^(OK|DEMO)/.test(r.sync || "") || !r.sync ? (r.edited ? "Ditukar & disimpan ke sheet" : "Disimpan ke sheet") : "Disimpan. CCTI ke sheet outlet: " + r.sync, 3200);
   } catch (e) {
     if (isNetErr(e)) { S.queue.push(p); store.set("ksales_q", S.queue); queued = true;
       const ent = { date: p.date, outlet: p.outlet, phone: p.phone, repair: p.repair, aksesori: p.aksesori, cc: p.cc, ti: p.ti, up: p.up, ur: p.ur, uc: p.uc, pic: p.pic }; applyEntry(ent); S.draft.saved = ent;
