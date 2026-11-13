@@ -593,11 +593,12 @@ async function render() {
   $("foot").innerHTML = DEMO ? "" : "Data jualan disimpan dalam sheet tracker. CC/TI received disalin ke sheet outlet.";
 }
 
+const APU_REPAIR = 160;   // sasaran APU Repair ditetapkan HQ
 function h3HTML(c, mu) {
   const pc = (a, p) => { if (!(p > 0)) return ""; const r = Math.round(a / p * 100); return `<i class="${r >= 100 ? "ok" : r >= 80 ? "wn" : "bd"}">${r}%</i>`; };
   const col = (lab, big, plan, pct) => `<div><span>${lab}</span><b>${big}</b><small>Plan ${plan}</small>${pct}</div>`;
-  const apu = (lab, r, u, tr, tu) => { const a = u > 0 ? r / u : 0, p = tu > 0 ? tr / tu : 0; return col(lab, u > 0 ? rm(Math.round(a)) : "-", p > 0 ? rm(Math.round(p)) : "-", u > 0 ? pc(a, p) : ""); };
-  return `<div class="h3">${col("RM MTD", rm(c.actual), rm(c.supposed), pc(c.actual, c.supposed))}${col("Unit MTD", fmt(mu.unit), mu.unitT > 0 ? f1(mu.unitS) : "-", pc(mu.unit, mu.unitS))}${apu("APU Phone", mu.rP, mu.uP, mu.tP, mu.tUP)}${apu("APU Repair", mu.rR, mu.uR, mu.tR, mu.tUR)}</div>`;
+  const apu = (lab, r, u, tr, tu, fix) => { const a = u > 0 ? r / u : 0, p = fix || (tu > 0 ? tr / tu : 0); return col(lab, u > 0 ? rm(Math.round(a)) : "-", p > 0 ? rm(Math.round(p)) : "-", u > 0 ? pc(a, p) : ""); };
+  return `<div class="h3">${col("RM MTD", rm(c.actual), rm(c.supposed), pc(c.actual, c.supposed))}${col("Unit MTD", fmt(mu.unit), mu.unitT > 0 ? f1(mu.unitS) : "-", pc(mu.unit, mu.unitS))}${apu("APU Phone", mu.rP, mu.uP, mu.tP, mu.tUP)}${apu("APU Repair", mu.rR, mu.uR, mu.tR, mu.tUR, mu.tUR > 0 ? APU_REPAIR : 0)}</div>`;
 }
 function heroHTML(eyebrow, c, extra, mu) {
   const d = diffOf(c), st = d >= 0 ? "s-ok" : (-d <= 0.1 * c.supposed ? "s-warn" : "s-bad");
@@ -719,7 +720,7 @@ function feedbackHTML(o, ym, date, entries, cuti) {
   const rows = [];
   let hit = 0, tot = 0;
   cats.forEach(c => {
-    const rmA = dv[c.k], rmD = m.daily[c.k], unA = dv[c.u], unD = c.tu ? c.tu / days : 0, apuT = c.tu ? c.rmT / c.tu : 0, apuA = unA > 0 ? rmA / unA : 0;
+    const rmA = dv[c.k], rmD = m.daily[c.k], unA = dv[c.u], unD = c.tu ? c.tu / days : 0, apuT = c.tu ? (c.k === "repair" ? APU_REPAIR : c.rmT / c.tu) : 0, apuA = unA > 0 ? rmA / unA : 0;
     const sR = st(rmA, rmD), sU = unD ? st(unA || 0, unD) : "na", sA = apuT && unA > 0 ? st(apuA, apuT) : "na";
     tot++; if (sR === "good") hit++;
     let tip;
