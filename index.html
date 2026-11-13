@@ -495,7 +495,6 @@ function buildReport(o, ym, date, entries, cuti, today) {
   const un = n => (n === undefined || n === null || n === "" ? "" : ` (${fmt(n)} unit)`);
   if (o.hasRepair) L.push(`Repair : ${rm(dv.repair)}${un(dv.ur)}`);
   L.push(`Phone : ${rm(dv.phone)}${un(dv.up)}`, `Aksesori : ${rm(dv.aksesori)}`, `CCTI Received : ${fmt(dv.ccti)} unit`);
-  if (dv.uc !== undefined && dv.uc !== null && dv.uc !== "") L.push(`CC/TI Jual : ${fmt(dv.uc)} unit`);
   L.push("", "*MONTHLY REPORT*");
   const ml = (name, c, unit) => `${name} : ${unit ? fmt(c.actual) + " / " + fmt(c.target) + " unit" : rm(c.actual)} (${tag(diffOf(c), unit)})`;
   if (o.hasRepair) L.push(ml("Repair", m.month.repair));
@@ -824,7 +823,6 @@ function renderToday(v) {
        ${f("inpUP", "c-phone", "Unit Phone", ICON.phone, "unit", d.up)}
        ${o.hasRepair ? f("inpRepair", "c-repair", "Repair", ICON.repair, "RM", d.repair) + f("inpUR", "c-repair", "Unit Repair", ICON.repair, "unit", d.ur) : ""}
        ${f("inpAkse", "c-akse wide", "Aksesori", ICON.akse, "RM", d.aksesori)}
-       ${f("inpUC", "c-cc wide", "Unit CC/TI jual", ICON.cc, "unit", d.uc)}
        ${f("inpCC", "c-cc", "CC diterima", ICON.cc, "unit", d.cc)}
        ${f("inpTI", "c-cc", "TI diterima", ICON.cc, "unit", d.ti)}
      </div>
@@ -833,7 +831,7 @@ function renderToday(v) {
      <div class="row2"><button class="btn ghost" id="btnView" type="button">${ICON.eye}Lihat laporan</button><button class="btn ghost" id="btnClear" type="button">Kosongkan borang</button></div>
    </div>`;
   const bind = (id, key) => $(id) && $(id).addEventListener("input", e => { S.draft[key] = e.target.value; persistDraft(); updateLive(o); });
-  bind("inpPhone", "phone"); bind("inpRepair", "repair"); bind("inpAkse", "aksesori"); bind("inpCC", "cc"); bind("inpTI", "ti"); bind("inpUP", "up"); bind("inpUR", "ur"); bind("inpUC", "uc");
+  bind("inpPhone", "phone"); bind("inpRepair", "repair"); bind("inpAkse", "aksesori"); bind("inpCC", "cc"); bind("inpTI", "ti"); bind("inpUP", "up"); bind("inpUR", "ur");
   $("inpDate").addEventListener("change", async e => {
     if (!e.target.value) return; S.draft.date = e.target.value;
     try { await loadMonth(S.draft.date.slice(0, 7)); } catch (er) { toast(er.message); return; }
@@ -855,7 +853,7 @@ function updateLive(o) {
   $("editBar").innerHTML = (isPast || d.saved) ? `<div class="editbar">${isPast ? `Edit tarikh <b>${prettyDate(d.date)}</b>. ` : ""}${d.saved ? "Nombor baru <b>ganti</b> yang lama, bukan tambah." : "Tarikh ini belum ada data."}</div>` : "";
 }
 function readyToSend(o) {
-  const d = S.draft, miss = [["phone", "Phone"], ...(o.hasRepair ? [["repair", "Repair"]] : []), ["aksesori", "Aksesori"], ["up", "Unit Phone"], ...(o.hasRepair ? [["ur", "Unit Repair"]] : []), ["uc", "Unit CC/TI jual"], ["cc", "CC"], ["ti", "TI"]].filter(([k]) => String(d[k] ?? "").trim() === "");
+  const d = S.draft, miss = [["phone", "Phone"], ...(o.hasRepair ? [["repair", "Repair"]] : []), ["aksesori", "Aksesori"], ["up", "Unit Phone"], ...(o.hasRepair ? [["ur", "Unit Repair"]] : []), ["cc", "CC"], ["ti", "TI"]].filter(([k]) => String(d[k] ?? "").trim() === "");
   if (miss.length) { toast("Isi semua ruangan (taip 0 kalau tiada): " + miss.map(x => x[1]).join(", "), 3600); return false; }
   return true;
 }
