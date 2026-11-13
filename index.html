@@ -93,10 +93,10 @@
   .hero .eyebrow{font-size:11.5px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:rgba(255,255,255,.78);}
   .hero .big{font-size:40px; font-weight:800; letter-spacing:-.03em; line-height:1.05; margin-top:4px;}
   .hero .sub2{font-size:12.5px; color:rgba(255,255,255,.85); margin-top:4px;}
-  .hero .hstats{display:flex; gap:10px; margin-top:12px;}
-  .hero .hstats>div{flex:1; background:rgba(255,255,255,.16); border-radius:12px; padding:8px 12px;}
-  .hero .hstats span{display:block; font-size:10.5px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:rgba(255,255,255,.8);}
-  .hero .hstats b{display:block; font-size:20px; font-weight:800; letter-spacing:-.02em; margin-top:2px;}
+  .hero .h3{display:grid; grid-template-columns:auto auto auto; justify-content:space-between; gap:8px; margin-top:8px;}
+  .hero .h3>div{min-width:0;}
+  .hero .h3 span{display:block; font-size:10.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:rgba(255,255,255,.78);}
+  .hero .h3 b{display:block; font-size:21px; font-weight:800; letter-spacing:-.03em; line-height:1.1; margin-top:3px; white-space:nowrap;}
   .hero .hbar{position:relative; height:8px; border-radius:99px; background:rgba(255,255,255,.2); margin-top:14px;}
   .hero .hbar>i{display:block; height:100%; border-radius:99px; background:#fff; max-width:100%;}
   .hero .hbar .pace{position:absolute; top:-4px; bottom:-4px; width:2px; margin-left:-1px; background:#FBBF24; border-radius:2px;}
@@ -591,9 +591,8 @@ async function render() {
 function heroHTML(eyebrow, c, extra, mu) {
   const d = diffOf(c), st = d >= 0 ? "s-ok" : (-d <= 0.1 * c.supposed ? "s-warn" : "s-bad");
   const pct = c.target ? Math.min(100, c.actual / c.target * 100) : 0, pace = c.target ? Math.min(100, c.supposed / c.target * 100) : 0;
-  return `<div class="hero"><div class="eyebrow">${eyebrow}</div><div class="big">${rm(c.actual)}</div>
+  return `<div class="hero"><div class="eyebrow">${eyebrow}</div>${mu ? `<div class="h3"><div><span>RM MTD</span><b>${rm(c.actual)}</b></div><div><span>Unit MTD</span><b>${fmt(mu.unit)}</b></div><div><span>APU MTD</span><b>${mu.unit > 0 ? rm(Math.round(mu.rm / mu.unit)) : "-"}</b></div></div>` : `<div class="big">${rm(c.actual)}</div>`}
     <div class="sub2">${extra}</div>
-    ${mu ? `<div class="hstats"><div><span>Unit MTD</span><b>${fmt(mu.unit)}</b></div><div><span>APU MTD</span><b>${mu.unit > 0 ? rm(Math.round(mu.rm / mu.unit)) : "-"}</b></div></div>` : ""}
     <div class="hbar"><i style="width:${pct}%"></i><span class="pace" style="left:${pace}%"></span></div>
     <div class="legend"><span>${pct.toFixed(0)}% daripada sasaran ${rm(c.target)}</span><span>▎ sepatutnya ${rm(c.supposed)}</span></div>
     <div class="statusCard ${st}"><span class="dot"></span><span>${d >= 0 ? "Lebih" : "Kurang"} <b>${rm(Math.abs(d))}</b> ${d >= 0 ? "daripada" : "berbanding"} sepatutnya</span></div></div>`;
