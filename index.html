@@ -742,8 +742,7 @@ function heroHTML(eyebrow, c, extra, mu, full, cats) {
   const d = diffOf(c), st = d >= 0 ? "s-ok" : (-d <= 0.1 * c.supposed ? "s-warn" : "s-bad");
   const pct = c.target ? Math.min(100, c.actual / c.target * 100) : 0, pace = c.target ? Math.min(100, c.supposed / c.target * 100) : 0;
   return `<div class="hero"><div class="eyebrow">${eyebrow}</div>${mu ? h3HTML(c, mu, full, cats) : `<div class="big">${rm(c.actual)}</div>`}
-    <div class="sub2">${extra}</div>
-    <div class="statusCard ${st}"><span class="dot"></span><span>${d >= 0 ? "Lebih" : "Kurang"} <b>${rm(Math.abs(d))}</b> ${d >= 0 ? "daripada" : "berbanding"} sepatutnya</span></div></div>`;
+    <div class="sub2">${extra}</div></div>`;
 }
 
 /* ----- Hari Ini (outlet) ----- */
