@@ -613,7 +613,9 @@ function entriesWithDraft(ym, o) {
 }
 function scopeData(ym, thru, withDraft) {
   const c = S.cache[ym];
-  const outs = S.scope === "*" ? c.outlets.filter(o => o.active) : c.outlets.filter(o => o.code === S.scope);
+  // HQ: outlet tak aktif (cth. Lunas) kekal dikira jualannya kalau ada rekod bulan itu; sasarannya 0 supaya plan HQ tak berganda
+  const hasRec = o => c.entries.some(e => e.outlet === o.code);
+  const outs = S.scope === "*" ? c.outlets.filter(o => o.active || hasRec(o)).map(o => o.active ? o : Object.assign({}, o, { name: o.name + " (tak aktif)", tPhone: 0, tRepair: 0, tAkse: 0, tCcti: 0, tUPhone: 0, tURepair: 0 })) : c.outlets.filter(o => o.code === S.scope);
   const per = outs.map(o => ({ o, m: outletMetrics(o, ym, thru, withDraft ? entriesWithDraft(ym, o) : c.entries, c.cuti) }));
   return { c, per, agg: per.length ? aggregate(per) : null };
 }
@@ -929,8 +931,9 @@ async function copyTxt(t) {
 /* ----- Ringkasan HQ ----- */
 function renderHqToday(v) {
   const date = S.hqDate || S.today, ym = date.slice(0, 7), c = S.cache[ym];
-  const { per, agg } = scopeData(ym, date, false);
-  const sent = per.filter(p => c.entries.some(e => e.outlet === p.o.code && e.date === date)).length;
+  const { per: perAll, agg } = scopeData(ym, date, false);
+  const per = perAll.filter(p => p.o.active || c.entries.some(e => e.outlet === p.o.code && e.date === date)), act = per.filter(p => p.o.active);
+  const sent = act.filter(p => c.entries.some(e => e.outlet === p.o.code && e.date === date)).length;
   const rows = per.map(p => {
     const e = c.entries.find(x => x.outlet === p.o.code && x.date === date), s = p.m.month.sales, d = diffOf(s), day = e ? valsOf(e) : null, st = statusOf(s);
     const open = p.m.cal.days[Number(date.slice(8)) - 1].isOp;
@@ -938,7 +941,7 @@ function renderHqToday(v) {
       <div class="r"><b>${e ? rm(day.sales) : "–"}</b><span class="pill st-${st}">${d >= 0 ? "+" : "−"}${rm(Math.abs(d))}</span></div></div>`;
   }).join("");
   setCats(ym, per.map(p => p.o.code), date);
-  v.innerHTML = heroHTML(`Semua outlet · setakat ${shortDate(date)}`, agg.month.sales, `${sent} / ${per.length} outlet dah hantar laporan ${shortDate(date)}`, agg.mu, false, agg.month) +
+  v.innerHTML = heroHTML(`Semua outlet · setakat ${shortDate(date)}`, agg.month.sales, `${sent} / ${act.length} outlet dah hantar laporan ${shortDate(date)}`, agg.mu, false, agg.month) +
     `<div class="card"><label class="lbl" for="hqDate">Tarikh</label><input class="datef" id="hqDate" type="date" value="${date}" max="${S.today}">
       <div style="margin-top:8px">${rows}</div><div class="mnote">Tekan outlet untuk buka borang / edit. Pill = surplus (+) atau deficit (−) berbanding sepatutnya.</div></div>`;
   $("hqDate").addEventListener("change", async e => { if (!e.target.value) return; S.hqDate = e.target.value; try { await loadMonth(S.hqDate.slice(0, 7)); } catch (er) { toast(er.message); return; } renderHqToday(v); });
@@ -960,7 +963,7 @@ function renderMonth(v) {
   const single = per.length === 1, s = agg.month.sales;
   const eyebrow = single ? `Hari ke-${per[0].m.idxThru} / ${per[0].m.total} · ${MONTHS[Number(ym.slice(5)) - 1]}` : `Semua outlet · ${MONTHS[Number(ym.slice(5)) - 1]}`;
   setCats(ym, per.map(p => p.o.code), thru);
-  let html = monthChips() + heroHTML(eyebrow, s, single ? `${per[0].o.name} · harian ${rm(per[0].m.daily.sales)}` : `${per.length} outlet aktif`, agg.mu, true, agg.month) + (single && ym === curYM() ? nextHTML(s, agg.mu, per[0].m.total - per[0].m.idxThru) : "");
+  let html = monthChips() + heroHTML(eyebrow, s, single ? `${per[0].o.name} · harian ${rm(per[0].m.daily.sales)}` : `${per.filter(p => p.o.active).length} outlet aktif${per.some(p => !p.o.active) ? " · termasuk rekod Lunas" : ""}`, agg.mu, true, agg.month) + (single && ym === curYM() ? nextHTML(s, agg.mu, per[0].m.total - per[0].m.idxThru) : "");
   html += `<div class="card"><div class="sgrp">Ikut kategori</div>${CATS.filter(x => x.k !== "sales").map(x => { const m = agg.mu, ex = !m || m.uP + m.uR <= 0 ? "" : x.k === "phone" ? mxHTML("Phone", m.rP, m.uP, m.tUP, m.tUP > 0 ? m.tP / m.tUP : 0) : x.k === "repair" ? mxHTML("Repair", m.rR, m.uR, m.tUR, APU_REPAIR) : ""; return rowHTML(x.name, x.unit, agg.month[x.k], ex, "c-" + x.k); }).join("")}</div>`;
   if (!single) html += `<div class="card"><div class="sgrp">Ikut outlet</div>${per.map(p => `<div class="ocard" style="cursor:default"><div class="n">${esc(p.o.name)}<small>Sasaran ${rm(p.m.month.sales.target)} · hari ${p.m.idxThru}/${p.m.total}</small></div><div class="r"><b>${rm(p.m.month.sales.actual)}</b><span class="pill st-${statusOf(p.m.month.sales)}">${sgn(diffOf(p.m.month.sales), "RM")}</span></div></div>`).join("")}</div>`;
   // jadual harian
